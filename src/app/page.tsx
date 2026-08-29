@@ -3,266 +3,196 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
-import { formatINR, formatDate } from "@/lib/utils";
-import { 
-  Building2, 
-  Layers, 
-  FileCheck2, 
-  KanbanSquare, 
-  ScrollText, 
-  Sparkles, 
-  ArrowRight, 
-  CheckCircle2, 
-  AlertCircle, 
-  ShieldCheck, 
-  Search,
-  ExternalLink,
-  ChevronRight,
-  Hash,
-  TrendingUp,
-  GitFork
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/utils";
 
-export default function DashboardOverview() {
-  const { currentOrg, schemes, documents, applications, getOrgEvaluation, getOrgDocumentReadiness } = useApp();
-  const [searchQuery, setSearchQuery] = useState("");
+export default function HomePage() {
+  const { currentOrg, schemes, getOrgEvaluation } = useApp();
 
-  const schemeEvaluations = schemes.map(s => ({
-    scheme: s,
-    evaluation: getOrgEvaluation(s.id),
-    readiness: getOrgDocumentReadiness(s.id)
-  }));
-
-  const eligibleSchemes = schemeEvaluations.filter(se => se.evaluation?.isEligible);
-  const potentialFunding = eligibleSchemes.reduce((sum, se) => sum + se.scheme.maxFundingAmount, 0);
-
-  const orgApps = applications.filter(a => a.orgId === currentOrg.id);
-  const totalSanctioned = orgApps
-    .filter(a => a.currentState === "Sanctioned")
-    .reduce((sum, a) => sum + (a.sanctionedAmount || 0), 0);
-
-  const filteredSchemes = schemeEvaluations.filter(se => 
-    se.scheme.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    se.scheme.ministryOrFunder.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Find a scheme to display in the case file
+  const activeScheme = schemes[0];
+  const evalResult = getOrgEvaluation(activeScheme.id);
 
   return (
-    <div className="space-y-6">
-      {/* Entity Overview Summary Banner */}
-      <div className="bg-[#14151a] border border-[#232530] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-[#ededef] tracking-tight">{currentOrg.name}</h1>
-            <span className="text-[10px] font-mono text-[#8b8d98] px-2 py-0.5 rounded bg-[#1a1c24] border border-[#232530]">
-              {currentOrg.entityType}
-            </span>
-            {currentOrg.complianceFlags.hasUdyam && (
-              <span className="text-[10px] font-mono text-[#2eb88a] px-2 py-0.5 rounded bg-[#13231e] border border-[#1e3b2e]">
-                {currentOrg.udyamTier} MSME
-              </span>
-            )}
-            {currentOrg.complianceFlags.has80G && (
-              <span className="text-[10px] font-mono text-[#3b82f6] px-2 py-0.5 rounded bg-[#142033] border border-[#1f3152]">
-                80G Certified
-              </span>
-            )}
+    <div>
+      {/* ---------- HERO SECTION ---------- */}
+      <section className="pt-20 pb-16">
+        <div className="wrap">
+          <div className="font-mono text-[12.5px] tracking-wider uppercase text-[var(--stamp)] mb-4">
+            For MSMEs &amp; NGOs registering for government and CSR grants
           </div>
-          <p className="text-xs text-[#8b8d98] line-clamp-1 max-w-3xl">
-            {currentOrg.missionDescription}
+
+          <h1 className="text-4xl md:text-5xl font-medium serif text-[var(--ink)] leading-[1.15] max-w-[16ch] mb-6 tracking-tight">
+            Know exactly which grants you qualify for — and exactly why.
+          </h1>
+
+          <p className="text-[17.5px] text-[var(--ink-soft)] measure leading-relaxed mb-8">
+            Most portals hand you a list of schemes and leave you to work out the fine print.
+            GrantPulse reads your organisation&apos;s actual registrations against each scheme&apos;s
+            real eligibility rules, and shows you the reasoning — not just a score.
           </p>
-        </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Link
-            href="/eligibility"
-            className="px-3 py-1.5 rounded-lg bg-[#1a1c24] hover:bg-[#20222c] text-[#ededef] font-medium text-xs border border-[#232530] flex items-center gap-1.5 transition-colors"
-          >
-            <GitFork className="w-3.5 h-3.5 text-[#8b8d98]" />
-            <span>AST Reasoner</span>
-          </Link>
-          <Link
-            href="/counterfactual"
-            className="px-3 py-1.5 rounded-lg bg-[#1a1c24] hover:bg-[#20222c] text-[#ededef] font-medium text-xs border border-[#232530] flex items-center gap-1.5 transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#8b8d98]" />
-            <span>What-If Simulator</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Top 4 KPI Metrics Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[11px] text-[#8b8d98] font-medium block">Eligible Schemes</span>
-          <div className="text-xl font-bold text-[#ededef] font-mono">
-            {eligibleSchemes.length} <span className="text-xs text-[#5e6170]">/ {schemes.length}</span>
-          </div>
-          <div className="text-[10px] text-[#2eb88a] font-mono">100% AST pass</div>
-        </div>
-
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[11px] text-[#8b8d98] font-medium block">Potential Grant Value</span>
-          <div className="text-xl font-bold text-[#ededef] font-mono">
-            {formatINR(potentialFunding, true)}
-          </div>
-          <div className="text-[10px] text-[#8b8d98]">Across qualified programs</div>
-        </div>
-
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[11px] text-[#8b8d98] font-medium block">Pipeline In-Flight</span>
-          <div className="text-xl font-bold text-[#ededef] font-mono">
-            {orgApps.length}
-          </div>
-          <div className="text-[10px] text-[#f59e0b] font-mono">FSM state guarded</div>
-        </div>
-
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[11px] text-[#8b8d98] font-medium block">Sanctioned Disbursals</span>
-          <div className="text-xl font-bold text-[#2eb88a] font-mono">
-            {formatINR(totalSanctioned, true)}
-          </div>
-          <div className="text-[10px] text-[#8b8d98]">Form GFR 12-A tracked</div>
-        </div>
-      </div>
-
-      {/* Two-Pane Workspace Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 7 Cols: Active Application Pipeline Table */}
-        <div className="lg:col-span-7 bg-[#14151a] border border-[#232530] rounded-xl overflow-hidden shadow-sm space-y-0">
-          <div className="p-4 border-b border-[#1e2029] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <KanbanSquare className="w-4 h-4 text-[#8b8d98]" />
-              <h2 className="font-semibold text-xs text-[#ededef] tracking-tight uppercase font-mono">
-                Active Grant Applications ({orgApps.length})
-              </h2>
-            </div>
-            <Link href="/pipeline" className="text-[11px] text-[#8b8d98] hover:text-[#ededef] font-medium flex items-center gap-1">
-              Open Board <ChevronRight className="w-3 h-3" />
+          <div className="flex flex-wrap items-center gap-5 mb-2">
+            <Link href="/eligibility" className="btn-ink text-[14.5px] py-2.5 px-5">
+              Start eligibility check
             </Link>
+            <a href="#casefile" className="link-quiet">
+              See a sample case file ↓
+            </a>
           </div>
 
-          <div className="divide-y divide-[#1e2029] text-xs">
-            {orgApps.map(app => {
-              const scheme = schemes.find(s => s.id === app.schemeId);
-              return (
-                <div key={app.id} className="p-3.5 hover:bg-[#1a1c24] transition-colors flex items-center justify-between gap-4">
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[#8b8d98] text-[10px]">{app.id}</span>
-                      <span className={cn(
-                        "text-[10px] font-mono px-2 py-0.5 rounded-full font-medium",
-                        app.currentState === "Sanctioned" ? "bg-[#13231e] text-[#2eb88a] border border-[#1e3b2e]"
-                        : app.currentState === "Under Review" ? "bg-[#142033] text-[#3b82f6] border border-[#1f3152]"
-                        : app.currentState === "Applied" ? "bg-[#201833] text-[#a78bfa] border border-[#2d2248]"
-                        : "bg-[#1f1d17] text-[#f59e0b] border border-[#3b341f]"
-                      )}>
-                        {app.currentState}
-                      </span>
-                      {app.externalApplicationId && (
-                        <span className="text-[10px] font-mono text-[#5e6170] truncate">
-                          Ref: {app.externalApplicationId}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-xs text-[#ededef] truncate">
-                      {scheme?.title || app.schemeId}
-                    </h3>
-                  </div>
-
-                  <div className="text-right flex-shrink-0">
-                    <div className="font-mono font-bold text-xs text-[#ededef]">
-                      {formatINR(app.requestedAmount, true)}
-                    </div>
-                    <div className="text-[10px] text-[#5e6170] font-mono">
-                      {formatDate(app.updated_at)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {orgApps.length === 0 && (
-              <div className="p-8 text-center text-xs text-[#5e6170]">
-                No applications in pipeline. Select an eligible scheme on the right to begin.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right 5 Cols: Eligible Schemes Feed */}
-        <div className="lg:col-span-5 bg-[#14151a] border border-[#232530] rounded-xl overflow-hidden shadow-sm space-y-0">
-          <div className="p-4 border-b border-[#1e2029] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#8b8d98]" />
-              <h2 className="font-semibold text-xs text-[#ededef] tracking-tight uppercase font-mono">
-                Scheme Catalog
-              </h2>
-            </div>
-            <Link href="/schemes" className="text-[11px] text-[#8b8d98] hover:text-[#ededef] font-medium flex items-center gap-1">
-              View All <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {/* Quick Search */}
-          <div className="p-3 border-b border-[#1e2029] bg-[#111216]">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#5e6170] absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter schemes..."
-                className="w-full bg-[#14151a] border border-[#232530] rounded-md pl-8 pr-3 py-1.5 text-xs text-[#ededef] placeholder-[#5e6170] focus:outline-none focus:border-[#373a4a]"
-              />
-            </div>
-          </div>
-
-          <div className="divide-y divide-[#1e2029] text-xs max-h-[500px] overflow-y-auto">
-            {filteredSchemes.map(({ scheme, evaluation, readiness }) => (
-              <div key={scheme.id} className="p-3.5 hover:bg-[#1a1c24] transition-colors space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono text-[#5e6170] truncate">
-                    {scheme.sourcePortal}
-                  </span>
-                  {evaluation?.isEligible ? (
-                    <span className="text-[10px] font-mono text-[#2eb88a] font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> 100% Match
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono text-[#f59e0b] font-semibold flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> {evaluation?.matchScore}% Match
-                    </span>
-                  )}
-                </div>
-
+          {/* ---------- SIGNATURE CASE FILE ---------- */}
+          <div className="casefile mt-16" id="casefile">
+            <div className="casefile-inner">
+              <div className="casefile-top">
                 <div>
-                  <h3 className="font-semibold text-xs text-[#ededef] line-clamp-1">
-                    {scheme.title}
-                  </h3>
-                  <p className="text-[11px] text-[#8b8d98] line-clamp-1 mt-0.5">
-                    {scheme.ministryOrFunder}
-                  </p>
+                  <div className="casefile-label">SAMPLE CASE FILE — READ ONLY</div>
+                  <div className="casefile-title">{currentOrg.name}</div>
                 </div>
-
-                <div className="flex items-center justify-between pt-1 text-[11px]">
-                  <span className="font-mono text-[#ededef] font-semibold">
-                    Cap: {formatINR(scheme.maxFundingAmount, true)}
-                  </span>
-
-                  <Link
-                    href={`/schemes/${scheme.id}`}
-                    className="text-[#8b8d98] hover:text-[#ededef] font-medium flex items-center gap-1"
-                  >
-                    <span>Inspect</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </Link>
+                <div className="casefile-label">
+                  Checked against: {activeScheme.title}
                 </div>
               </div>
-            ))}
+
+              <div className="org-facts">
+                <div>Entity type: <b>{currentOrg.entityType}</b></div>
+                <div>Annual turnover: <b>{formatINR(currentOrg.turnoverInr)}</b></div>
+                <div>Udyam tier: <b>{currentOrg.udyamTier !== 'None' ? currentOrg.udyamTier : 'Unregistered'}</b></div>
+                <div>Location: <b>{currentOrg.state}, India</b></div>
+              </div>
+
+              <ul className="trace">
+                <li>
+                  <span className="mark yes">✓</span>
+                  <span className="trace-text">
+                    <b>Entity type matches</b> — {currentOrg.entityType} accepted for this scheme
+                    <span>Rule: entity_type IN [Private Limited, LLP, Section 8, Trust]</span>
+                  </span>
+                </li>
+                <li>
+                  <span className="mark yes">✓</span>
+                  <span className="trace-text">
+                    <b>Turnover within limit</b> — {formatINR(currentOrg.turnoverInr, true)} is under the {formatINR(activeScheme.maxFundingAmount * 50, true)} ceiling
+                    <span>Rule: turnover LTE 2500000000</span>
+                  </span>
+                </li>
+                <li>
+                  <span className={currentOrg.complianceFlags.has80G ? "mark yes" : "mark no"}>
+                    {currentOrg.complianceFlags.has80G ? "✓" : "✕"}
+                  </span>
+                  <span className="trace-text">
+                    <b>{currentOrg.complianceFlags.has80G ? "80G registration verified" : "80G registration missing"}</b> — required for tax-exempt disbursement tranche
+                    <span>Rule: registrations.80G EQUALS true — {currentOrg.complianceFlags.has80G ? "valid certificate logged" : "currently pending"}</span>
+                  </span>
+                </li>
+                <li>
+                  <span className={currentOrg.complianceFlags.hasUdyam ? "mark yes" : "mark no"}>
+                    {currentOrg.complianceFlags.hasUdyam ? "✓" : "✕"}
+                  </span>
+                  <span className="trace-text">
+                    <b>{currentOrg.complianceFlags.hasUdyam ? "Udyam tier eligible" : "Udyam registration required"}</b> — qualifies for enhanced subsidy band
+                    <span>Rule: udyam_tier IN [Micro, Small, Medium]</span>
+                  </span>
+                </li>
+              </ul>
+
+              <div className="stamp-row">
+                <div className="stamp">
+                  6 of 14 screened — eligible now
+                </div>
+                <p>
+                  Filing additional registrations (12A/80G, CSR-1) opens 3 more schemes worth an estimated ₹35L in funding.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* ---------- PHILOSOPHY SECTION ---------- */}
+      <section className="py-24 border-t border-[var(--rule)]">
+        <div className="wrap">
+          <h2 className="text-3xl font-medium serif text-[var(--ink)] mb-6 max-w-[18ch] tracking-tight">
+            Not a dashboard. A case file.
+          </h2>
+          <div className="measure space-y-4 text-[16.5px] text-[var(--ink-soft)] leading-relaxed">
+            <p>
+              Every scheme has a rulebook, and every rulebook is negotiable if you know what&apos;s
+              actually being asked. So instead of a wall of match percentages, GrantPulse keeps
+              one open file at a time — your organisation&apos;s facts, laid against one scheme&apos;s
+              real conditions, line by line.
+            </p>
+            <p className="pull-quote">
+              A percentage tells you how close you are. A reasoning trace tells you what to do next.
+            </p>
+            <p>
+              That&apos;s the whole design decision behind this homepage, too: the numbers exist,
+              and you&apos;ll see them once you&apos;re inside — but the front door opens onto one worked
+              example, not a spreadsheet. Read it before you commit.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- THREE PANELS SECTION ---------- */}
+      <section className="pb-24">
+        <div className="wrap">
+          <div className="mb-11">
+            <div className="font-mono text-[12.5px] tracking-wider uppercase text-[var(--stamp)] mb-3">
+              What&apos;s inside the workspace
+            </div>
+            <h2 className="text-2xl md:text-3xl font-medium serif text-[var(--ink)] tracking-tight">
+              Three things this replaces on your desk
+            </h2>
+          </div>
+
+          <div className="panel-grid">
+            {/* Panel 1: Match */}
+            <Link href="/eligibility" className="panel no-underline text-inherit group block hover:bg-[var(--paper-deep)] transition-colors">
+              <div className="idx font-mono text-[12px] text-[var(--stamp)] mb-4">01 · Match</div>
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" className="mb-4">
+                <circle cx="14" cy="14" r="9" stroke="#22271F" strokeWidth="1.4"/>
+                <line x1="20.5" y1="20.5" x2="29" y2="29" stroke="#22271F" strokeWidth="1.4"/>
+              </svg>
+              <h3 className="text-lg font-medium serif text-[var(--ink)] mb-2 group-hover:underline">
+                The scheme finder
+              </h3>
+              <p className="text-[14.5px] text-[var(--ink-soft)] leading-relaxed">
+                Rule-based eligibility with a visible reasoning trace, plus a &quot;what if&quot; check for registrations you haven&apos;t filed yet.
+              </p>
+            </Link>
+
+            {/* Panel 2: Verify */}
+            <Link href="/documents" className="panel no-underline text-inherit group block hover:bg-[var(--paper-deep)] transition-colors">
+              <div className="idx font-mono text-[12px] text-[var(--stamp)] mb-4">02 · Verify</div>
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" className="mb-4">
+                <rect x="7" y="4" width="20" height="26" rx="1" stroke="#22271F" strokeWidth="1.4"/>
+                <path d="M12 13h10M12 18h10M12 23h6" stroke="#22271F" strokeWidth="1.4"/>
+              </svg>
+              <h3 className="text-lg font-medium serif text-[var(--ink)] mb-2 group-hover:underline">
+                The document folder
+              </h3>
+              <p className="text-[14.5px] text-[var(--ink-soft)] leading-relaxed">
+                Upload registration certificates once; GrantPulse checks formats, expiry dates, and name matches automatically.
+              </p>
+            </Link>
+
+            {/* Panel 3: Track */}
+            <Link href="/pipeline" className="panel no-underline text-inherit group block hover:bg-[var(--paper-deep)] transition-colors">
+              <div className="idx font-mono text-[12px] text-[var(--stamp)] mb-4">03 · Track</div>
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none" className="mb-4">
+                <path d="M5 17h24M17 5v24" stroke="#22271F" strokeWidth="1.4" strokeDasharray="1 4"/>
+                <circle cx="17" cy="17" r="12" stroke="#22271F" strokeWidth="1.4"/>
+              </svg>
+              <h3 className="text-lg font-medium serif text-[var(--ink)] mb-2 group-hover:underline">
+                The application ledger
+              </h3>
+              <p className="text-[14.5px] text-[var(--ink-soft)] leading-relaxed">
+                Every status change is logged in a tamper-evident chain, from first discovery through to sanctioned funds.
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

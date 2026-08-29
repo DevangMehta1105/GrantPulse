@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { TraceNode } from "@/lib/types";
-import { Check, X, ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AstNodeVisualizerProps {
@@ -16,51 +16,42 @@ export function AstNodeVisualizer({ trace, level = 0 }: AstNodeVisualizerProps) 
   const isGroup = trace.type === "group" && trace.children && trace.children.length > 0;
 
   return (
-    <div className={cn("transition-all text-xs", level > 0 && "ml-4 pl-3 border-l border-[#232530] my-1.5")}>
+    <div className={cn("transition-all text-xs", level > 0 && "ml-5 pl-4 border-l border-[var(--rule)] my-2")}>
       <div 
         className={cn(
-          "flex items-start justify-between p-3 rounded-lg border transition-colors",
+          "flex items-start justify-between p-3.5 border transition-colors bg-[var(--paper)]",
           trace.passed 
-            ? "bg-[#111614] border-[#1e2e26]" 
-            : "bg-[#161214] border-[#331e24]"
+            ? "border-[var(--rule)]" 
+            : "border-[var(--rule)]"
         )}
       >
-        <div className="flex items-start gap-2.5 flex-1 min-w-0">
-          {/* Status Indicator */}
-          <div className={cn(
-            "w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold mt-0.5 flex-shrink-0",
-            trace.passed ? "bg-[#1b382b] text-[#2eb88a]" : "bg-[#3d1a21] text-[#ef4444]"
-          )}>
-            {trace.passed ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-          </div>
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          {/* Mark */}
+          <span className={cn("mark", trace.passed ? "yes" : "no")}>
+            {trace.passed ? "✓" : "✕"}
+          </span>
 
           {/* Node Details */}
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn(
-                "px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold uppercase",
-                trace.passed ? "bg-[#182620] text-[#2eb88a]" : "bg-[#29171b] text-[#ef4444]"
-              )}>
+              <span className="font-mono text-[11px] uppercase text-[var(--ink-soft)] px-1.5 py-0.2 bg-[var(--paper-deep)] border border-[var(--rule)]">
                 {trace.operator}
               </span>
-              <span className="font-medium text-[#ededef]">
+              <span className="font-medium text-sm text-[var(--ink)]">
                 {trace.description}
               </span>
             </div>
 
-            <p className={cn(
-              "text-[11px] leading-tight",
-              trace.passed ? "text-[#8b8d98]" : "text-[#f87171]"
-            )}>
+            <p className="text-[13px] text-[var(--ink-soft)] leading-snug">
               {trace.reason}
             </p>
 
             {/* Condition Values */}
             {trace.type === "condition" && trace.targetValue !== undefined && (
-              <div className="flex items-center gap-2 text-[10px] font-mono text-[#5e6170] pt-0.5">
-                <span>Rule: <strong className="text-[#8b8d98]">{JSON.stringify(trace.targetValue)}</strong></span>
-                <span>•</span>
-                <span>Actual: <strong className={trace.passed ? "text-[#2eb88a]" : "text-[#ef4444]"}>
+              <div className="font-mono text-[11px] text-[var(--ink-soft)] pt-1">
+                <span>Rule: <strong className="text-[var(--ink)]">{JSON.stringify(trace.targetValue)}</strong></span>
+                <span> · </span>
+                <span>Entity has: <strong className={trace.passed ? "text-[var(--verified)] font-medium" : "text-[var(--stamp)] font-medium"}>
                   {trace.actualValue !== undefined ? JSON.stringify(trace.actualValue) : "null"}
                 </strong></span>
               </div>
@@ -72,16 +63,16 @@ export function AstNodeVisualizer({ trace, level = 0 }: AstNodeVisualizerProps) 
         {isGroup && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded text-[#5e6170] hover:text-[#ededef] hover:bg-[#1e2029] transition-colors ml-2 cursor-pointer flex-shrink-0"
+            className="p-1 text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors ml-2 cursor-pointer flex-shrink-0"
           >
-            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
         )}
       </div>
 
       {/* Children */}
       {isGroup && isExpanded && trace.children && (
-        <div className="mt-1 space-y-1">
+        <div className="mt-1.5 space-y-1.5">
           {trace.children.map((child) => (
             <AstNodeVisualizer key={child.id} trace={child} level={level + 1} />
           ))}

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { formatINR, formatDate } from "@/lib/utils";
 import { AstNodeVisualizer } from "@/components/ast/AstNodeVisualizer";
-import { ArrowLeft, Check, AlertTriangle, Send } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SchemeDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,8 +18,8 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
   const scheme = schemes.find(s => s.id === unwrappedParams.id);
   if (!scheme) {
     return (
-      <div className="p-8 text-center text-xs text-[#8b8d98]">
-        Scheme not found. <Link href="/schemes" className="text-white underline">Return to catalog</Link>
+      <div className="wrap py-12 text-center text-sm text-[var(--ink-soft)]">
+        Scheme not found. <Link href="/schemes" className="text-[var(--ink)] underline">Return to catalog</Link>
       </div>
     );
   }
@@ -36,31 +36,31 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <div className="space-y-6 text-xs">
+    <div className="wrap py-12 space-y-8">
       <Link 
         href="/schemes" 
-        className="inline-flex items-center gap-1.5 text-xs text-[#8b8d98] hover:text-[#ededef] transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--ink-soft)] hover:text-[var(--ink)] transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>Back to Catalog</span>
       </Link>
 
       {/* Program Summary Card */}
-      <div className="bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4">
+      <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-6 md:p-8 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="text-[10px] font-mono text-[#5e6170] uppercase">
-              {scheme.sourcePortal} • {scheme.grantType}
+            <div className="font-mono text-[11px] uppercase text-[var(--stamp)]">
+              {scheme.sourcePortal} · {scheme.grantType}
             </div>
-            <h1 className="text-base font-bold text-[#ededef]">{scheme.title}</h1>
-            <p className="text-xs text-[#8b8d98]">{scheme.ministryOrFunder}</p>
+            <h1 className="text-2xl md:text-3xl font-medium serif text-[var(--ink)]">{scheme.title}</h1>
+            <p className="text-sm font-medium text-[var(--ink-soft)]">{scheme.ministryOrFunder}</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div>
             {existingApp ? (
               <Link
                 href="/pipeline"
-                className="px-3.5 py-1.5 rounded-md bg-[#1a1c24] text-[#ededef] font-medium border border-[#232530] hover:bg-[#20222c]"
+                className="btn-ink-ghost text-xs py-2 px-4"
               >
                 Track in Pipeline ({existingApp.currentState})
               </Link>
@@ -68,7 +68,7 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
               <button
                 onClick={handleApply}
                 disabled={isApplying}
-                className="px-4 py-1.5 rounded-md bg-[#ededef] text-[#0d0e11] font-semibold hover:bg-white transition-colors cursor-pointer"
+                className="btn-ink text-xs py-2 px-4"
               >
                 {isApplying ? "Adding..." : "Add to Application Pipeline"}
               </button>
@@ -76,76 +76,70 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
 
-        <p className="text-xs text-[#8b8d98] leading-relaxed max-w-4xl">
+        <p className="text-sm text-[var(--ink-soft)] leading-relaxed max-w-4xl">
           {scheme.description}
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#1e2029] font-mono text-[11px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-dashed border-[var(--rule)] font-mono text-xs">
           <div>
-            <span className="text-[#5e6170] block text-[10px]">MAX FUNDING</span>
-            <span className="font-bold text-[#ededef]">{formatINR(scheme.maxFundingAmount, true)}</span>
+            <span className="text-[var(--ink-soft)] block text-[10px]">MAX FUNDING CAP</span>
+            <span className="font-semibold text-sm text-[var(--ink)]">{formatINR(scheme.maxFundingAmount, true)}</span>
           </div>
           <div>
-            <span className="text-[#5e6170] block text-[10px]">DEADLINE</span>
-            <span className="text-[#ededef]">{formatDate(scheme.deadline)}</span>
+            <span className="text-[var(--ink-soft)] block text-[10px]">DEADLINE</span>
+            <span className="text-[var(--ink)]">{formatDate(scheme.deadline)}</span>
           </div>
           <div>
-            <span className="text-[#5e6170] block text-[10px]">AST MATCH</span>
-            <span className={evalResult?.isEligible ? "text-[#2eb88a] font-bold" : "text-[#f59e0b] font-bold"}>
-              {evalResult?.matchScore}%
+            <span className="text-[var(--ink-soft)] block text-[10px]">AST ELIGIBILITY</span>
+            <span className={evalResult?.isEligible ? "text-[var(--verified)] font-bold" : "text-[var(--pending)] font-bold"}>
+              {evalResult?.matchScore}% Match
             </span>
           </div>
           <div>
-            <span className="text-[#5e6170] block text-[10px]">DOC READINESS</span>
-            <span className="text-[#ededef] font-bold">{readiness.score}%</span>
+            <span className="text-[var(--ink-soft)] block text-[10px]">DOCUMENT READINESS</span>
+            <span className="text-[var(--ink)] font-bold">{readiness.score}%</span>
           </div>
         </div>
       </div>
 
-      {/* Two Column Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* Two Column Layout: AST + Required Documents */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* AST Visualizer */}
-        <div className="lg:col-span-8 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1e2029] pb-3">
-            <h2 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
-              AST Eligibility Evaluation
-            </h2>
-            <span className="text-[10px] font-mono text-[#5e6170]">
-              {currentOrg.name} profile
-            </span>
+        <div className="lg:col-span-8 space-y-4">
+          <div className="font-mono text-xs text-[var(--ink-soft)] uppercase tracking-wider">
+            Evaluation Rules Trace ({currentOrg.name}):
           </div>
-
           {evalResult && (
             <AstNodeVisualizer trace={evalResult.trace} />
           )}
         </div>
 
         {/* Required Documents */}
-        <div className="lg:col-span-4 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-3">
-          <div className="flex items-center justify-between border-b border-[#1e2029] pb-3">
-            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
-              Document Checklist
+        <div className="lg:col-span-4 bg-[var(--paper-deep)] border border-[var(--rule)] p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--rule)] pb-3">
+            <h3 className="font-mono text-xs uppercase font-medium text-[var(--ink)]">
+              Document Requirements
             </h3>
-            <span className="text-[10px] font-mono text-[#5e6170]">
+            <span className="font-mono text-[11px] text-[var(--ink-soft)]">
               {readiness.mandatoryVerified} / {readiness.mandatoryTotal}
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {scheme.requiredDocuments.map((doc, idx) => {
               const isVerified = readiness.verifiedDocs.some(d => d.docType === doc.docType);
               return (
                 <div
                   key={idx}
-                  className="p-2.5 rounded-lg bg-[#111216] border border-[#1e2029] flex items-center justify-between gap-2"
+                  className="p-3 bg-[var(--paper)] border border-[var(--rule)] flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium text-[#ededef] truncate">{doc.name}</div>
-                    <div className="text-[10px] text-[#5e6170] truncate">{doc.description}</div>
+                    <div className="font-medium text-xs text-[var(--ink)] truncate">{doc.name}</div>
+                    <div className="text-[11px] text-[var(--ink-soft)] truncate">{doc.description}</div>
                   </div>
                   <span className={cn(
-                    "text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded flex-shrink-0",
-                    isVerified ? "bg-[#13231e] text-[#2eb88a]" : "bg-[#1f1d17] text-[#f59e0b]"
+                    "text-[10px] font-mono font-medium px-2 py-0.5 rounded-xs flex-shrink-0",
+                    isVerified ? "bg-[var(--verified-bg)] text-[var(--verified)]" : "bg-[var(--pending-bg)] text-[var(--pending)]"
                   )}>
                     {isVerified ? "Verified" : "Missing"}
                   </span>

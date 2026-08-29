@@ -5,14 +5,6 @@ import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import { formatINR } from "@/lib/utils";
 import { COMMON_COMPLIANCE_MODIFIERS, runCounterfactualAnalysis } from "@/lib/ast-engine/counterfactual";
-import { 
-  Sparkles, 
-  TrendingUp, 
-  ChevronRight,
-  Clock, 
-  Coins,
-  ShieldCheck
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CounterfactualPage() {
@@ -28,49 +20,54 @@ export default function CounterfactualPage() {
   const simulation = runCounterfactualAnalysis(currentOrg, schemes, selectedModifiers);
 
   return (
-    <div className="space-y-6">
+    <div className="wrap py-12 space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-lg font-bold text-[#ededef]">Counterfactual &quot;What-If&quot; Simulator</h1>
-        <p className="text-xs text-[#8b8d98]">
-          Simulate regulatory additions (e.g. 12A/80G, FCRA, Udyam) to discover newly unlocked grants and immediate INR funding delta.
+      <div className="border-b border-[var(--rule)] pb-6">
+        <div className="font-mono text-[12px] tracking-wider uppercase text-[var(--stamp)] mb-2">
+          Simulation Engine · Counterfactual Matching
+        </div>
+        <h1 className="text-3xl md:text-4xl font-medium serif text-[var(--ink)] tracking-tight">
+          What-If Registration Simulator
+        </h1>
+        <p className="text-[15px] text-[var(--ink-soft)] mt-2 measure">
+          Simulate regulatory additions (80G, 12A, NGO Darpan, FCRA, CSR-1, Udyam) to calculate newly unlocked funding value.
         </p>
       </div>
 
       {/* Delta Funding Hero Banner */}
-      <div className="bg-[#14151a] border border-[#232530] rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-1">
-          <span className="text-[10px] font-mono uppercase text-[#5e6170]">
-            Simulated Grant Funding Delta
+          <span className="font-mono text-[11px] uppercase tracking-wider text-[var(--stamp)]">
+            Potential Grant Funding Delta
           </span>
-          <div className="text-2xl md:text-3xl font-bold text-[#2eb88a] font-mono">
+          <div className="text-3xl md:text-4xl font-medium serif text-[var(--ink)]">
             +{formatINR(simulation.totalPotentialFundingDelta, true)}
           </div>
-          <p className="text-xs text-[#8b8d98]">
-            Unlocks <strong className="text-[#ededef] font-semibold">{simulation.unlockedSchemes.length} additional grant programs</strong> for {currentOrg.name}.
+          <p className="text-sm text-[var(--ink-soft)]">
+            Unlocks <b className="text-[var(--ink)] font-semibold">{simulation.unlockedSchemes.length} additional grant programs</b> for {currentOrg.name}.
           </p>
         </div>
 
-        <div className="text-right text-xs font-mono text-[#8b8d98] bg-[#111216] border border-[#1e2029] p-3 rounded-lg">
-          <div>Entity: <span className="text-[#ededef] font-semibold">{currentOrg.name}</span></div>
-          <div>Structure: <span className="text-[#ededef]">{currentOrg.entityType}</span></div>
+        <div className="text-right text-xs font-mono text-[var(--ink-soft)] bg-[var(--paper)] border border-[var(--rule)] p-4">
+          <div>Active Entity: <b className="text-[var(--ink)]">{currentOrg.name}</b></div>
+          <div>Structure: <b className="text-[var(--ink)]">{currentOrg.entityType}</b></div>
         </div>
       </div>
 
       {/* Two Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Modifier Controls */}
-        <div className="lg:col-span-5 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-3 text-xs">
-          <div className="flex items-center justify-between border-b border-[#1e2029] pb-3">
-            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
-              Compliance Upgrades
+        <div className="lg:col-span-5 bg-[var(--paper-deep)] border border-[var(--rule)] p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--rule)] pb-3">
+            <h3 className="font-mono text-xs uppercase font-medium text-[var(--ink)]">
+              Simulate Regulatory Additions
             </h3>
-            <span className="text-[10px] font-mono text-[#5e6170]">
-              {selectedModifiers.length} applied
+            <span className="font-mono text-[11px] text-[var(--ink-soft)]">
+              {selectedModifiers.length} active
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {COMMON_COMPLIANCE_MODIFIERS.map(mod => {
               const isChecked = selectedModifiers.includes(mod.key);
               return (
@@ -78,26 +75,26 @@ export default function CounterfactualPage() {
                   key={mod.key}
                   onClick={() => toggleModifier(mod.key)}
                   className={cn(
-                    "w-full text-left p-3 rounded-lg border transition-colors flex items-start justify-between gap-3 cursor-pointer",
+                    "w-full text-left p-3.5 border transition-colors flex items-start justify-between gap-3 cursor-pointer",
                     isChecked
-                      ? "bg-[#181c26] border-[#2b3447]"
-                      : "bg-[#111216] border-[#1e2029] hover:border-[#2a2c38]"
+                      ? "bg-[var(--paper)] border-[var(--ink)]"
+                      : "bg-[var(--paper)] border-[var(--rule)] hover:border-[var(--ink-soft)]"
                   )}
                 >
                   <div className="space-y-1">
-                    <div className={cn("font-medium text-xs", isChecked ? "text-[#ededef]" : "text-[#8b8d98]")}>
+                    <div className="font-medium text-xs text-[var(--ink)]">
                       {mod.label}
                     </div>
-                    <div className="flex items-center gap-3 text-[10px] font-mono text-[#5e6170]">
+                    <div className="flex items-center gap-3 text-[11px] font-mono text-[var(--ink-soft)]">
                       <span>~{mod.timeframeWeeks} wks</span>
-                      <span>•</span>
+                      <span>·</span>
                       <span>~{formatINR(mod.costEstimateInr || 0)}</span>
                     </div>
                   </div>
 
                   <div className={cn(
-                    "w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold mt-0.5 flex-shrink-0",
-                    isChecked ? "bg-[#2eb88a] text-[#0d0e11]" : "bg-[#1e2029] text-transparent"
+                    "w-4 h-4 rounded-xs flex items-center justify-center text-[10px] font-mono font-bold mt-0.5 flex-shrink-0 border",
+                    isChecked ? "bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]" : "border-[var(--rule)] text-transparent"
                   )}>
                     ✓
                   </div>
@@ -108,50 +105,49 @@ export default function CounterfactualPage() {
         </div>
 
         {/* Unlocked Schemes List */}
-        <div className="lg:col-span-7 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4 text-xs">
-          <div className="flex items-center justify-between border-b border-[#1e2029] pb-3">
-            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
+        <div className="lg:col-span-7 bg-[var(--paper-deep)] border border-[var(--rule)] p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--rule)] pb-3">
+            <h3 className="font-mono text-xs uppercase font-medium text-[var(--ink)]">
               Newly Unlocked Programs ({simulation.unlockedSchemes.length})
             </h3>
           </div>
 
           {simulation.unlockedSchemes.length > 0 ? (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {simulation.unlockedSchemes.map(({ scheme, fundingAmount, unlockedByFixing }) => (
                 <div
                   key={scheme.id}
-                  className="p-3.5 rounded-lg bg-[#111216] border border-[#1e2029] flex items-center justify-between gap-4"
+                  className="p-4 bg-[var(--paper)] border border-[var(--rule)] flex items-center justify-between gap-4"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
-                    <div className="text-[10px] font-mono text-[#5e6170]">
+                    <div className="text-[11px] font-mono text-[var(--ink-soft)]">
                       {scheme.ministryOrFunder}
                     </div>
-                    <h4 className="font-semibold text-xs text-[#ededef] truncate">
+                    <h4 className="text-sm font-medium serif text-[var(--ink)] truncate">
                       {scheme.title}
                     </h4>
-                    <div className="text-[10px] text-[#8b8d98]">
-                      Unlocked by: <span className="text-[#ededef] font-medium">{unlockedByFixing.join(", ")}</span>
+                    <div className="text-[12px] text-[var(--ink-soft)]">
+                      Unlocked by: <span className="text-[var(--ink)] font-medium">{unlockedByFixing.join(", ")}</span>
                     </div>
                   </div>
 
-                  <div className="text-right flex-shrink-0 space-y-1">
-                    <div className="font-mono font-bold text-xs text-[#2eb88a]">
+                  <div className="text-right flex-shrink-0 space-y-1 font-mono">
+                    <div className="font-medium text-xs text-[var(--ink)]">
                       {formatINR(fundingAmount, true)}
                     </div>
                     <Link
                       href={`/schemes/${scheme.id}`}
-                      className="text-[10px] text-[#8b8d98] hover:text-[#ededef] flex items-center gap-0.5 justify-end"
+                      className="btn-ink text-[11px] py-1 px-2.5"
                     >
-                      <span>View</span>
-                      <ChevronRight className="w-3 h-3" />
+                      Inspect File →
                     </Link>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-xs text-[#5e6170]">
-              Toggle one or more compliance upgrades on the left to simulate unlocked grants.
+            <div className="p-8 text-center text-xs text-[var(--ink-soft)] font-mono">
+              Toggle one or more registrations on the left to simulate unlocked schemes.
             </div>
           )}
         </div>

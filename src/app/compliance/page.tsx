@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatINR, formatDate } from "@/lib/utils";
-import { Printer, Plus, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Printer } from "lucide-react";
 
 export default function CompliancePage() {
   const { currentOrg, applications, schemes, expenses, addExpense } = useApp();
@@ -25,7 +24,7 @@ export default function CompliancePage() {
   const sanctionedAmount = activeApp?.sanctionedAmount || activeScheme?.maxFundingAmount || 500000;
   const unutilizedBalance = sanctionedAmount - totalUtilized;
 
-  // New Expense form state
+  // Form state
   const [newVendor, setNewVendor] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newCategory, setNewCategory] = useState<any>("Capital Equipment");
@@ -52,88 +51,93 @@ export default function CompliancePage() {
   };
 
   return (
-    <div className="space-y-6 text-xs">
+    <div className="wrap py-12 space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--rule)] pb-6">
         <div>
-          <h1 className="text-lg font-bold text-[#ededef]">Post-Sanction Fund Utilization & Form GFR 12-A</h1>
-          <p className="text-xs text-[#8b8d98]">
-            Tranche accounting, category budget cap verification, and statutory certificate export.
+          <div className="font-mono text-[12px] tracking-wider uppercase text-[var(--stamp)] mb-2">
+            Disbursement &amp; Compliance · Form GFR 12-A
+          </div>
+          <h1 className="text-3xl md:text-4xl font-medium serif text-[var(--ink)] tracking-tight">
+            Post-Sanction Fund Utilization Ledger
+          </h1>
+          <p className="text-[15px] text-[var(--ink-soft)] mt-2 measure">
+            Tranche accounting, statutory category budget cap verification, and official Utilization Certificate export.
           </p>
         </div>
 
         <button
           onClick={() => window.print()}
-          className="px-3 py-1.5 rounded-md bg-[#1a1c24] hover:bg-[#20222c] text-[#ededef] border border-[#232530] flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+          className="btn-ink text-xs py-2 px-4 flex items-center gap-2 self-start sm:self-auto"
         >
-          <Printer className="w-3.5 h-3.5 text-[#8b8d98]" />
-          <span>Print GFR 12-A</span>
+          <Printer className="w-3.5 h-3.5" />
+          <span>Print Form GFR 12-A</span>
         </button>
       </div>
 
       {/* Metric Counters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[10px] text-[#5e6170] uppercase">Sanctioned Tranche</span>
-          <div className="text-xl font-bold text-[#ededef]">{formatINR(sanctionedAmount)}</div>
-          <div className="text-[10px] text-[#5e6170]">{activeApp?.externalApplicationId || "Ref: Active"}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 font-mono text-xs">
+        <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-5 space-y-1">
+          <span className="text-[10px] text-[var(--ink-soft)] uppercase tracking-wider">Sanctioned Tranche</span>
+          <div className="text-2xl font-medium serif text-[var(--ink)]">{formatINR(sanctionedAmount)}</div>
+          <div className="text-[11px] text-[var(--ink-soft)]">{activeApp?.externalApplicationId || "Ref: Active"}</div>
         </div>
 
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[10px] text-[#5e6170] uppercase">Utilized (Vouched)</span>
-          <div className="text-xl font-bold text-[#2eb88a]">{formatINR(totalUtilized)}</div>
-          <div className="text-[10px] text-[#8b8d98]">
-            {((totalUtilized / sanctionedAmount) * 100).toFixed(1)}% of tranche
+        <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-5 space-y-1">
+          <span className="text-[10px] text-[var(--ink-soft)] uppercase tracking-wider">Utilized (Vouched)</span>
+          <div className="text-2xl font-medium serif text-[var(--verified)]">{formatINR(totalUtilized)}</div>
+          <div className="text-[11px] text-[var(--ink-soft)]">
+            {((totalUtilized / sanctionedAmount) * 100).toFixed(1)}% of total tranche
           </div>
         </div>
 
-        <div className="bg-[#14151a] border border-[#232530] rounded-xl p-4 space-y-1">
-          <span className="text-[10px] text-[#5e6170] uppercase">Unutilized Balance</span>
-          <div className="text-xl font-bold text-[#f59e0b]">{formatINR(unutilizedBalance)}</div>
-          <div className="text-[10px] text-[#2eb88a]">✓ Compliant with GFR 238(1)</div>
+        <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-5 space-y-1">
+          <span className="text-[10px] text-[var(--ink-soft)] uppercase tracking-wider">Unutilized Balance</span>
+          <div className="text-2xl font-medium serif text-[var(--pending)]">{formatINR(unutilizedBalance)}</div>
+          <div className="text-[11px] text-[var(--verified)]">✓ 100% GFR 238(1) Compliant</div>
         </div>
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Ledger & Add Expense Form */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Add Expense */}
-          <div className="bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-3">
-            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono border-b border-[#1e2029] pb-2.5">
-              Record Grant Expense
+          {/* Add Expense Form */}
+          <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-6 space-y-4 text-xs">
+            <h3 className="font-mono text-xs uppercase font-medium text-[var(--ink)] border-b border-[var(--rule)] pb-3">
+              Record Audited Grant Expense
             </h3>
 
-            <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleAddExpense} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[#8b8d98] font-medium mb-1">Vendor / Payee</label>
+                <label className="block text-[var(--ink)] font-medium mb-1">Vendor / Payee</label>
                 <input
                   type="text"
                   value={newVendor}
                   onChange={(e) => setNewVendor(e.target.value)}
                   placeholder="e.g. Metrology Lab"
-                  className="w-full bg-[#111216] border border-[#232530] rounded-md px-2.5 py-1.5 text-xs text-[#ededef] focus:outline-none focus:border-[#373a4a]"
+                  className="w-full bg-[var(--paper)] border border-[var(--rule)] px-3 py-2 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[#8b8d98] font-medium mb-1">Invoice No.</label>
+                <label className="block text-[var(--ink)] font-medium mb-1">Invoice / Voucher No.</label>
                 <input
                   type="text"
                   value={newInvoiceNo}
                   onChange={(e) => setNewInvoiceNo(e.target.value)}
                   placeholder="e.g. INV-2024-884"
-                  className="w-full bg-[#111216] border border-[#232530] rounded-md px-2.5 py-1.5 text-xs text-[#ededef] font-mono focus:outline-none focus:border-[#373a4a]"
+                  className="w-full bg-[var(--paper)] border border-[var(--rule)] px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--ink)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[#8b8d98] font-medium mb-1">Category</label>
+                <label className="block text-[var(--ink)] font-medium mb-1">Category</label>
                 <select
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full bg-[#111216] border border-[#232530] rounded-md px-2.5 py-1.5 text-xs text-[#ededef] focus:outline-none focus:border-[#373a4a] cursor-pointer"
+                  className="w-full bg-[var(--paper)] border border-[var(--rule)] px-3 py-2 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--ink)] cursor-pointer"
                 >
                   <option value="Capital Equipment">Capital Equipment</option>
                   <option value="Manpower & Salaries">Manpower & Salaries</option>
@@ -144,13 +148,13 @@ export default function CompliancePage() {
               </div>
 
               <div>
-                <label className="block text-[#8b8d98] font-medium mb-1">Amount (INR)</label>
+                <label className="block text-[var(--ink)] font-medium mb-1">Amount (INR)</label>
                 <input
                   type="number"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
                   placeholder="e.g. 45000"
-                  className="w-full bg-[#111216] border border-[#232530] rounded-md px-2.5 py-1.5 text-xs text-[#ededef] font-mono focus:outline-none focus:border-[#373a4a]"
+                  className="w-full bg-[var(--paper)] border border-[var(--rule)] px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--ink)]"
                   required
                 />
               </div>
@@ -158,37 +162,39 @@ export default function CompliancePage() {
               <div className="sm:col-span-2 pt-1">
                 <button
                   type="submit"
-                  className="w-full py-1.5 rounded-md bg-[#ededef] text-[#0d0e11] font-semibold hover:bg-white transition-colors cursor-pointer"
+                  className="btn-ink w-full py-2"
                 >
-                  Add to Ledger
+                  Add to Ledger &amp; Verify Cap
                 </button>
               </div>
             </form>
           </div>
 
           {/* Vouched Expense List */}
-          <div className="bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-3">
-            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono border-b border-[#1e2029] pb-2.5">
-              Expense Ledger ({appExpenses.length} entries)
+          <div className="bg-[var(--paper-deep)] border border-[var(--rule)] p-6 space-y-4 text-xs">
+            <h3 className="font-mono text-xs uppercase font-medium text-[var(--ink)] border-b border-[var(--rule)] pb-3">
+              Vouched Expenses ({appExpenses.length} entries)
             </h3>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {appExpenses.map(exp => (
                 <div
                   key={exp.id}
-                  className="p-3 rounded-lg bg-[#111216] border border-[#1e2029] flex items-center justify-between gap-3 text-xs"
+                  className="p-4 bg-[var(--paper)] border border-[var(--rule)] flex items-center justify-between gap-3 text-xs"
                 >
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#ededef]">{exp.vendorName}</span>
-                      <span className="text-[10px] font-mono text-[#5e6170]">({exp.invoiceNumber})</span>
+                      <span className="font-medium text-sm text-[var(--ink)]">{exp.vendorName}</span>
+                      <span className="text-[10px] font-mono text-[var(--ink-soft)] bg-[var(--paper-deep)] px-1.5 py-0.2 border border-[var(--rule)]">
+                        {exp.invoiceNumber}
+                      </span>
                     </div>
-                    <div className="text-[11px] text-[#8b8d98]">
-                      {exp.category} • {formatDate(exp.timestamp)}
+                    <div className="text-[12px] text-[var(--ink-soft)]">
+                      {exp.category} · {formatDate(exp.timestamp)}
                     </div>
                   </div>
 
-                  <div className="font-mono font-bold text-xs text-[#ededef]">
+                  <div className="font-mono font-medium text-sm text-[var(--ink)]">
                     {formatINR(exp.amount)}
                   </div>
                 </div>
@@ -198,26 +204,26 @@ export default function CompliancePage() {
         </div>
 
         {/* Right: Formal Form GFR 12-A Certificate */}
-        <div className="lg:col-span-5 bg-[#111216] border border-[#232530] rounded-xl p-5 space-y-4 text-xs">
-          <div className="text-center border-b border-[#1e2029] pb-3 space-y-1">
-            <span className="text-[10px] font-mono uppercase text-[#5e6170]">
+        <div className="lg:col-span-5 bg-[var(--paper)] border border-[var(--ink)] p-8 space-y-6 text-xs shadow-xl">
+          <div className="text-center border-b border-[var(--rule)] pb-4 space-y-1">
+            <span className="font-mono text-[11px] uppercase tracking-widest text-[var(--stamp)] block">
               FORM GFR 12-A
             </span>
-            <h4 className="font-bold text-xs text-[#ededef]">
+            <h4 className="font-medium serif text-base text-[var(--ink)]">
               UTILIZATION CERTIFICATE
             </h4>
-            <p className="text-[10px] text-[#5e6170]">
+            <p className="text-[11px] font-mono text-[var(--ink-soft)]">
               [See Rule 238 (1) of General Financial Rules, 2017]
             </p>
           </div>
 
-          <div className="space-y-2.5 text-[#8b8d98] leading-relaxed text-[11px]">
+          <div className="space-y-4 text-[var(--ink-soft)] leading-relaxed text-[13px]">
             <p>
-              1. Certified that out of <strong className="text-[#ededef] font-mono">{formatINR(sanctionedAmount)}</strong> grants-in-aid sanctioned during the year in favour of <strong className="text-[#ededef]">{currentOrg.name}</strong> under Letter No. <strong className="text-[#ededef] font-mono">{activeApp?.externalApplicationId || "SO-ZED-9821"}</strong>.
+              1. Certified that out of <b className="text-[var(--ink)] font-mono">{formatINR(sanctionedAmount)}</b> grants-in-aid sanctioned during the financial year in favour of <b className="text-[var(--ink)]">{currentOrg.name}</b> under Letter No. <b className="text-[var(--ink)] font-mono">{activeApp?.externalApplicationId || "SO-ZED-9821"}</b>.
             </p>
 
             <p>
-              2. A sum of <strong className="text-[#ededef] font-mono">{formatINR(totalUtilized)}</strong> has been utilized for the purpose of <strong className="text-[#ededef]">{activeScheme.title}</strong> for which it was sanctioned, leaving an unutilized balance of <strong className="text-[#ededef] font-mono">{formatINR(unutilizedBalance)}</strong>.
+              2. A sum of <b className="text-[var(--ink)] font-mono">{formatINR(totalUtilized)}</b> has been utilized for the purpose of <b className="text-[var(--ink)]">{activeScheme.title}</b> for which it was sanctioned, leaving an unutilized balance of <b className="text-[var(--ink)] font-mono">{formatINR(unutilizedBalance)}</b>.
             </p>
 
             <p>
@@ -225,9 +231,14 @@ export default function CompliancePage() {
             </p>
           </div>
 
-          <div className="pt-4 border-t border-[#1e2029] flex items-center justify-between text-[10px] text-[#5e6170] font-mono">
-            <div>Date: {new Date().toLocaleDateString("en-IN")}</div>
-            <div className="text-[#2eb88a]">SHA-256 Verified</div>
+          <div className="pt-6 border-t border-[var(--rule)] flex items-center justify-between text-[11px] font-mono text-[var(--ink-soft)]">
+            <div>
+              <div>Date: {new Date().toLocaleDateString("en-IN")}</div>
+              <div>Place: {currentOrg.state}, India</div>
+            </div>
+            <div className="stamp text-[11px] py-1 px-2.5">
+              SHA-256 Verified
+            </div>
           </div>
         </div>
       </div>

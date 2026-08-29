@@ -1,18 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useApp } from "@/context/AppContext";
-import { AstNodeVisualizer } from "@/components/ast/AstNodeVisualizer";
 import { formatINR } from "@/lib/utils";
-import { 
-  GitFork, 
-  Check, 
-  X, 
-  Layers, 
-  Building2, 
-  Info,
-  ChevronRight
-} from "lucide-react";
+import { AstNodeVisualizer } from "@/components/ast/AstNodeVisualizer";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function EligibilityPage() {
@@ -23,17 +16,22 @@ export default function EligibilityPage() {
   const evalResult = getOrgEvaluation(selectedScheme.id);
 
   return (
-    <div className="space-y-6">
+    <div className="wrap py-12 space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-lg font-bold text-[#ededef]">AST Eligibility Reasoner</h1>
-        <p className="text-xs text-[#8b8d98]">
-          Deterministic boolean and threshold tree verification evaluated live against {currentOrg.name}.
+      <div className="border-b border-[var(--rule)] pb-6">
+        <div className="font-mono text-[12px] tracking-wider uppercase text-[var(--stamp)] mb-2">
+          Eligibility Engine · Explainable AST Trace
+        </div>
+        <h1 className="text-3xl md:text-4xl font-medium serif text-[var(--ink)] tracking-tight">
+          How Matching Works: Rule Evaluation
+        </h1>
+        <p className="text-[15px] text-[var(--ink-soft)] mt-2 measure">
+          Evaluating {currentOrg.name}&apos;s actual registration facts against each scheme&apos;s real condition tree.
         </p>
       </div>
 
       {/* Scheme Selector Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#1e2029]">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--rule)]">
         {schemes.map(scheme => {
           const res = getOrgEvaluation(scheme.id);
           const isSelected = scheme.id === selectedSchemeId;
@@ -42,98 +40,61 @@ export default function EligibilityPage() {
               key={scheme.id}
               onClick={() => setSelectedSchemeId(scheme.id)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2 flex-shrink-0 transition-colors cursor-pointer",
+                "px-3 py-2 text-xs font-mono text-left transition-colors flex items-center gap-2 flex-shrink-0 cursor-pointer border",
                 isSelected
-                  ? "bg-[#1a1c24] text-[#ededef] border border-[#232530]"
-                  : "text-[#8b8d98] hover:text-[#ededef] hover:bg-[#14151a]"
+                  ? "bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)] font-medium"
+                  : "bg-[var(--paper-deep)] text-[var(--ink-soft)] border-[var(--rule)] hover:border-[var(--ink)] hover:text-[var(--ink)]"
               )}
             >
-              <span className={cn("w-1.5 h-1.5 rounded-full", res?.isEligible ? "bg-[#2eb88a]" : "bg-[#f59e0b]")} />
-              <span className="truncate max-w-[180px]">{scheme.title}</span>
-              <span className="text-[10px] font-mono text-[#5e6170]">{res?.matchScore}%</span>
+              <span>{res?.isEligible ? "✓" : "✕"}</span>
+              <span className="truncate max-w-[200px]">{scheme.title}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Main Analysis Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* AST Trace Tree */}
-        <div className="lg:col-span-8 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1e2029]">
+      {/* Signature Case File Container */}
+      <div className="casefile" id="casefile-view">
+        <div className="casefile-inner">
+          <div className="casefile-top">
             <div>
-              <span className="text-[10px] font-mono text-[#5e6170] uppercase">
-                {selectedScheme.sourcePortal}
-              </span>
-              <h2 className="text-sm font-semibold text-[#ededef] mt-0.5">
-                {selectedScheme.title}
-              </h2>
+              <div className="casefile-label">ACTIVE CASE FILE — EVALUATION AUDIT</div>
+              <div className="casefile-title">{currentOrg.name}</div>
             </div>
-
-            <div className="text-right font-mono">
-              <span className={cn(
-                "text-xs px-2 py-0.5 rounded font-bold",
-                evalResult?.isEligible ? "bg-[#13231e] text-[#2eb88a] border border-[#1e3b2e]" : "bg-[#211a14] text-[#f59e0b] border border-[#382a1b]"
-              )}>
-                {evalResult?.isEligible ? "100% Eligible" : `${evalResult?.matchScore}% Match`}
-              </span>
+            <div className="casefile-label">
+              Scheme: <b>{selectedScheme.title}</b> ({selectedScheme.ministryOrFunder})
             </div>
           </div>
 
-          {/* AST Visualizer */}
+          <div className="org-facts">
+            <div>Entity type: <b>{currentOrg.entityType}</b></div>
+            <div>Annual turnover: <b>{formatINR(currentOrg.turnoverInr)}</b></div>
+            <div>Udyam tier: <b>{currentOrg.udyamTier !== 'None' ? currentOrg.udyamTier : 'Unregistered'}</b></div>
+            <div>State: <b>{currentOrg.state}</b></div>
+          </div>
+
+          {/* AST Tree Visualizer */}
           {evalResult && (
-            <div className="space-y-2">
-              <div className="text-[11px] font-mono text-[#5e6170] uppercase">
-                Evaluation Syntax Tree:
+            <div className="space-y-4 mb-6">
+              <div className="font-mono text-xs text-[var(--ink-soft)] uppercase tracking-wider">
+                AST Condition Hierarchy &amp; Reasoning:
               </div>
               <AstNodeVisualizer trace={evalResult.trace} />
             </div>
           )}
-        </div>
 
-        {/* Right Rail: Actionable Remediation Summary */}
-        <div className="lg:col-span-4 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4 text-xs">
-          <div className="flex items-center gap-2 border-b border-[#1e2029] pb-3">
-            <Info className="w-4 h-4 text-[#8b8d98]" />
-            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
-              Evaluation Breakdown
-            </h3>
-          </div>
-
-          {evalResult?.isEligible ? (
-            <div className="p-3 rounded-lg bg-[#111614] border border-[#1e2e26] text-[#2eb88a] space-y-1">
-              <div className="font-semibold">All Constraints Met</div>
-              <p className="text-[11px] text-[#8b8d98]">
-                {currentOrg.name} meets all regulatory, turnover, and structure parameters for this scheme.
-              </p>
+          {/* Bottom Stamp Row */}
+          <div className="stamp-row">
+            <div className="stamp">
+              {evalResult?.isEligible ? "100% Eligible · Ready to Apply" : `${evalResult?.matchScore}% Match · Remediation Required`}
             </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="text-[11px] font-mono text-[#ef4444]">
-                Unmet Conditions ({evalResult?.missingRequirements.length}):
-              </div>
-              <div className="space-y-1.5">
-                {evalResult?.missingRequirements.map((req, i) => (
-                  <div key={i} className="p-2.5 rounded-md bg-[#161214] border border-[#331e24] text-[11px] text-[#f87171]">
-                    {req}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Passed Rules */}
-          <div className="pt-2 space-y-1.5">
-            <span className="text-[10px] font-mono uppercase text-[#5e6170]">
-              Passed Rules ({evalResult?.passedRulesCount}/{evalResult?.totalRulesCount})
-            </span>
-            <div className="space-y-1">
-              {evalResult?.criticalPasses.map((pass, idx) => (
-                <div key={idx} className="text-[11px] text-[#8b8d98] flex items-center gap-1.5">
-                  <Check className="w-3 h-3 text-[#2eb88a] flex-shrink-0" />
-                  <span className="truncate">{pass}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/schemes/${selectedScheme.id}`}
+                className="btn-ink text-xs py-2 px-4"
+              >
+                Proceed to Application →
+              </Link>
             </div>
           </div>
         </div>
