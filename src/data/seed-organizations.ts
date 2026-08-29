@@ -1,0 +1,130 @@
+import { Organization } from "../lib/types";
+
+export const SEED_ORGANIZATIONS: Organization[] = [
+  {
+    id: "org-1",
+    name: "Arogya Rural Healthcare Trust",
+    entityType: "Trust",
+    turnoverInr: 8500000, // ₹85 Lakhs
+    incorporationDate: "2020-04-12",
+    yearsOfOperation: 5,
+    udyamTier: "None",
+    state: "Maharashtra",
+    sector: "Healthcare & Rural Welfare",
+    complianceFlags: {
+      hasGstin: false,
+      hasPan: true,
+      pan: "AABTA4921K",
+      hasUdyam: false,
+      has12A: true,
+      reg12ANumber: "AABTA4921KE20214",
+      has80G: true,
+      reg80GNumber: "AABTA4921KG20218",
+      hasNgoDarpan: true,
+      ngoDarpanId: "MH/2021/0289145",
+      hasFcra: false,
+      hasCsr1: true,
+      csr1Number: "CSR00019283",
+      isWomanLed: true,
+      isScStLed: false,
+      isGreenfield: false
+    },
+    missionDescription: "Delivering primary healthcare, maternal health diagnostic camps, and telemedicine vans across remote tribal villages in Maharashtra and Madhya Pradesh.",
+    contactEmail: "director@arogyatrust.org.in",
+    created_at: "2024-01-15T10:00:00Z"
+  },
+  {
+    id: "org-2",
+    name: "Vidyut Micro Mobility Pvt Ltd",
+    entityType: "Private Limited",
+    turnoverInr: 14500000, // ₹1.45 Crores
+    incorporationDate: "2022-08-19",
+    yearsOfOperation: 3,
+    udyamTier: "Micro",
+    state: "Karnataka",
+    sector: "CleanTech & EV Innovation",
+    complianceFlags: {
+      hasGstin: true,
+      gstin: "29AABCV9821K1Z3",
+      hasPan: true,
+      pan: "AABCV9821K",
+      hasUdyam: true,
+      udyamNumber: "UDYAM-KR-03-0048192",
+      has12A: false,
+      has80G: false,
+      hasNgoDarpan: false,
+      hasFcra: false,
+      hasCsr1: false,
+      isWomanLed: true,
+      isScStLed: false,
+      isGreenfield: true
+    },
+    missionDescription: "Engineering affordable swappable battery powertrains and last-mile cargo electric three-wheelers for tier-2 agricultural logistics.",
+    contactEmail: "founder@vidyutmobility.in",
+    created_at: "2024-02-10T11:30:00Z"
+  },
+  {
+    id: "org-3",
+    name: "GreenRoots Agro Foundation",
+    entityType: "Section 8",
+    turnoverInr: 32000000, // ₹3.2 Crores
+    incorporationDate: "2019-02-14",
+    yearsOfOperation: 6,
+    udyamTier: "None",
+    state: "Telangana",
+    sector: "Sustainable Agriculture & Water Conservation",
+    complianceFlags: {
+      hasGstin: true,
+      gstin: "36AABCG1298P1Z8",
+      hasPan: true,
+      pan: "AABCG1298P",
+      hasUdyam: false,
+      has12A: true,
+      reg12ANumber: "AABCG1298PE20201",
+      has80G: true,
+      reg80GNumber: "AABCG1298PG20205",
+      hasNgoDarpan: true,
+      ngoDarpanId: "TS/2020/0178492",
+      hasFcra: true,
+      fcraNumber: "094421873",
+      hasCsr1: true,
+      csr1Number: "CSR00038192",
+      isWomanLed: false,
+      isScStLed: false,
+      isGreenfield: false
+    },
+    missionDescription: "Empowering 12,000+ smallholder farmers with regenerative agroforestry, solar micro-drip irrigation, and bio-fertilizer production clusters.",
+    contactEmail: "partnerships@greenroots.org.in",
+    created_at: "2024-01-20T09:15:00Z"
+  },
+  {
+    id: "org-4",
+    name: "Kavach Precision Engineering LLP",
+    entityType: "LLP",
+    turnoverInr: 140000000, // ₹14 Crores
+    incorporationDate: "2018-11-05",
+    yearsOfOperation: 7,
+    udyamTier: "Small",
+    state: "Gujarat",
+    sector: "Advanced Manufacturing & Defense Components",
+    complianceFlags: {
+      hasGstin: true,
+      gstin: "24AABCK5412Q1Z1",
+      hasPan: true,
+      pan: "AABCK5412Q",
+      hasUdyam: true,
+      udyamNumber: "UDYAM-GJ-01-0012489",
+      has12A: false,
+      has80G: false,
+      hasNgoDarpan: false,
+      hasFcra: false,
+      hasCsr1: false,
+      isWomanLed: false,
+      isScStLed: false,
+      isGreenfield: true
+    },
+    missionDescription: "CNC precision fabrication of aerospace grade alloy components, indigenous drone chassis, and high-tolerance sub-assemblies.",
+    contactEmail: "info@kavachengineering.com",
+    created_at: "2024-03-01T14:00:00Z"
+  }
+];
