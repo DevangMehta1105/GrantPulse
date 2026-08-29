@@ -4,93 +4,42 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  Sparkles, 
-  Compass, 
+  LayoutDashboard,
   Layers, 
   GitFork, 
+  Sparkles, 
   FileCheck2, 
   KanbanSquare, 
   BotMessageSquare, 
   ScrollText, 
   ShieldCheck,
   Landmark,
-  ChevronRight,
-  TrendingUp,
-  Workflow
+  FileSpreadsheet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: any;
-  badge?: string;
-  pillColor?: string;
-}
-
-const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+const NAV_SECTIONS = [
   {
-    title: "Guided Workflow",
+    title: "OVERVIEW",
     items: [
-      {
-        name: "Lifecycle Wizard",
-        href: "/",
-        icon: Workflow,
-        badge: "Start Here",
-        pillColor: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-      },
-      {
-        name: "Grant Catalog",
-        href: "/schemes",
-        icon: Layers,
-        badge: "6 Active"
-      },
-      {
-        name: "AST Reasoner",
-        href: "/eligibility",
-        icon: GitFork,
-        badge: "Explain"
-      },
-      {
-        name: "What-If Simulator",
-        href: "/counterfactual",
-        icon: Sparkles,
-        badge: "ROI Delta"
-      }
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Grant Catalog", href: "/schemes", icon: Layers, count: "6" },
+      { name: "AST Reasoner", href: "/eligibility", icon: GitFork },
+      { name: "What-If Simulator", href: "/counterfactual", icon: Sparkles }
     ]
   },
   {
-    title: "Execution & Vault",
+    title: "WORKFLOW",
     items: [
-      {
-        name: "FSM Pipeline",
-        href: "/pipeline",
-        icon: KanbanSquare,
-        badge: "SHA-256"
-      },
-      {
-        name: "Document & OCR",
-        href: "/documents",
-        icon: FileCheck2,
-        badge: "Regex"
-      },
-      {
-        name: "AI Proposal Co-Pilot",
-        href: "/copilot",
-        icon: BotMessageSquare,
-        badge: "AI"
-      }
+      { name: "Pipeline Kanban", href: "/pipeline", icon: KanbanSquare },
+      { name: "Document Vault", href: "/documents", icon: FileCheck2 },
+      { name: "Proposal Co-Pilot", href: "/copilot", icon: BotMessageSquare }
     ]
   },
   {
-    title: "Sanction & Compliance",
+    title: "COMPLIANCE",
     items: [
-      {
-        name: "GFR 12-A Ledger",
-        href: "/compliance",
-        icon: ScrollText,
-        badge: "Ledger"
-      }
+      { name: "GFR 12-A Ledger", href: "/compliance", icon: ScrollText }
     ]
   }
 ];
@@ -99,31 +48,30 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-[#0c0e14] border-r border-[#1a1f2c] flex flex-col h-screen sticky top-0 text-slate-300 select-none z-40">
+    <aside className="w-60 flex-shrink-0 bg-[#0d0e11] border-r border-[#1e2029] flex flex-col h-screen sticky top-0 text-[#8b8d98] select-none text-xs">
       {/* Brand Header */}
-      <div className="p-4 border-b border-[#1a1f2c] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-            <Landmark className="w-4.5 h-4.5 text-slate-950 font-black" />
+      <div className="h-14 px-4 border-b border-[#1e2029] flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-md bg-white text-[#0d0e11] flex items-center justify-center font-black text-xs">
+            GP
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base text-white tracking-tight">Grant<span className="text-emerald-400">Pulse</span></span>
-              <span className="text-[9px] uppercase font-mono font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">OS</span>
-            </div>
-            <p className="text-[10px] text-slate-400 font-medium">MSME & NGO Operating System</p>
-          </div>
+          <span className="font-semibold text-sm text-[#ededef] tracking-tight">
+            GrantPulse
+          </span>
         </Link>
+        <span className="text-[10px] font-mono text-[#5e6170] px-1.5 py-0.5 rounded bg-[#14151a] border border-[#1e2029]">
+          v3.0
+        </span>
       </div>
 
       {/* Navigation Sections */}
-      <div className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
-        {NAV_GROUPS.map((group, gIdx) => (
-          <div key={gIdx} className="space-y-1">
-            <div className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-              {group.title}
+      <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+        {NAV_SECTIONS.map((section, sIdx) => (
+          <div key={sIdx} className="space-y-1">
+            <div className="px-2.5 pb-1 text-[10px] font-mono font-semibold tracking-wider text-[#5e6170]">
+              {section.title}
             </div>
-            {group.items.map((item) => {
+            {section.items.map((item) => {
               const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
               const Icon = item.icon;
               return (
@@ -131,28 +79,21 @@ export function Sidebar() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all group relative",
+                    "flex items-center justify-between px-2.5 py-1.5 rounded-md font-medium transition-colors",
                     isActive
-                      ? "bg-[#141923] text-emerald-400 border border-[#232a3b] shadow-sm"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-[#12151e]"
+                      ? "bg-[#1a1c24] text-[#ededef] shadow-sm"
+                      : "text-[#8b8d98] hover:text-[#ededef] hover:bg-[#14151a]"
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={cn("w-4 h-4 transition-colors", isActive ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200")} />
+                    <Icon className={cn("w-4 h-4", isActive ? "text-[#ededef]" : "text-[#5e6170]")} />
                     <span>{item.name}</span>
                   </div>
 
-                  {item.badge && (
-                    <span className={cn(
-                      "text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded",
-                      item.pillColor || (isActive ? "bg-emerald-400/20 text-emerald-300" : "bg-[#181d28] text-slate-400 group-hover:text-slate-300")
-                    )}>
-                      {item.badge}
+                  {item.count && (
+                    <span className="text-[10px] font-mono text-[#5e6170] bg-[#14151a] px-1.5 py-0.2 rounded">
+                      {item.count}
                     </span>
-                  )}
-
-                  {isActive && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-emerald-400" />
                   )}
                 </Link>
               );
@@ -161,17 +102,14 @@ export function Sidebar() {
         ))}
       </div>
 
-      {/* Footer System Status */}
-      <div className="p-3 border-t border-[#1a1f2c] bg-[#090b10]/60">
-        <div className="p-2.5 rounded-xl bg-[#11141c] border border-[#1e2433] flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs">
-            <ShieldCheck className="w-4 h-4 text-cyan-400" />
-            <div>
-              <div className="font-semibold text-slate-200 text-[11px]">Audit Proof</div>
-              <div className="text-[9px] text-slate-400 font-mono">SHA-256 Verified</div>
-            </div>
+      {/* Footer Audit Status */}
+      <div className="p-3 border-t border-[#1e2029]">
+        <div className="px-2.5 py-2 rounded-md bg-[#14151a] border border-[#1e2029] flex items-center justify-between text-[11px]">
+          <div className="flex items-center gap-2 text-[#8b8d98]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#2eb88a]" />
+            <span className="font-mono">SHA-256 Provenance</span>
           </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2eb88a]" />
         </div>
       </div>
     </aside>

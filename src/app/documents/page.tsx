@@ -5,18 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { DocumentType } from "@/lib/types";
 import { INDIAN_REG_REGEXES } from "@/lib/ocr/validator";
 import { formatDate } from "@/lib/utils";
-import { 
-  FileCheck2, 
-  UploadCloud, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  FileText, 
-  ShieldCheck, 
-  Sparkles,
-  Eye,
-  Plus
-} from "lucide-react";
+import { FileCheck2, UploadCloud, Check, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SAMPLE_OCR_TEMPLATES: Record<DocumentType, string> = {
@@ -37,7 +26,7 @@ export default function DocumentsPage() {
   const [selectedDocType, setSelectedDocType] = useState<DocumentType>("GSTIN_CERTIFICATE");
   const [fileNameInput, setFileNameInput] = useState("GSTIN_Cert_Uploaded.pdf");
   const [ocrTextInput, setOcrTextInput] = useState(SAMPLE_OCR_TEMPLATES["GSTIN_CERTIFICATE"]);
-  const [isSuccessModal, setIsSuccessModal] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
 
   const orgDocs = documents.filter(d => d.orgId === currentOrg.id);
 
@@ -50,164 +39,128 @@ export default function DocumentsPage() {
   const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addDocument(selectedDocType, fileNameInput, ocrTextInput);
-    setIsSuccessModal(true);
-    setTimeout(() => setIsSuccessModal(false), 2500);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 2000);
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6 text-xs">
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Pillar D • Hosted OCR & Indian Regulatory Regex Audit</span>
-        </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white">
-          Document Vault & OCR Verification
-        </h1>
-        <p className="text-sm text-slate-400">
-          Automated OCR regex extraction for GSTIN, PAN, Udyam, 12A/80G, NGO Darpan, CSR-1 & FCRA certificates.
+        <h1 className="text-lg font-bold text-[#ededef]">Document Vault & OCR Validator</h1>
+        <p className="text-xs text-[#8b8d98]">
+          Automated syntax extraction for GSTIN, PAN, Udyam, 12A/80G, NGO Darpan, CSR-1 & FCRA certificates.
         </p>
       </div>
 
-      {/* Upload and Simulator Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Upload Simulator */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-sm">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <UploadCloud className="w-5 h-5 text-indigo-400" />
-            Upload Document & Run OCR
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Upload Form */}
+        <div className="lg:col-span-5 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4">
+          <h2 className="font-semibold text-xs text-[#ededef] uppercase font-mono border-b border-[#1e2029] pb-3">
+            Add Document & Run Parser
           </h2>
 
-          <form onSubmit={handleUploadSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleUploadSubmit} className="space-y-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Document Category</label>
+              <label className="block text-[#8b8d98] font-medium mb-1">Document Category</label>
               <select
                 value={selectedDocType}
                 onChange={(e) => handleDocTypeChange(e.target.value as DocumentType)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                className="w-full bg-[#111216] border border-[#232530] rounded-md px-3 py-1.5 text-[#ededef] focus:outline-none focus:border-[#373a4a] cursor-pointer"
               >
                 {Object.keys(INDIAN_REG_REGEXES).map(type => (
                   <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
                 ))}
               </select>
-              <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                Rule: {INDIAN_REG_REGEXES[selectedDocType]?.description}
+              <p className="text-[10px] text-[#5e6170] mt-1 font-mono">
+                Pattern: {INDIAN_REG_REGEXES[selectedDocType]?.description}
               </p>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">File Name</label>
+              <label className="block text-[#8b8d98] font-medium mb-1">File Name</label>
               <input
                 type="text"
                 value={fileNameInput}
                 onChange={(e) => setFileNameInput(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#111216] border border-[#232530] rounded-md px-3 py-1.5 text-[#ededef] font-mono focus:outline-none focus:border-[#373a4a]"
                 required
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">
-                OCR Extracted Text Payload (Simulated / Live)
-              </label>
+              <label className="block text-[#8b8d98] font-medium mb-1">OCR Text Payload</label>
               <textarea
                 value={ocrTextInput}
                 onChange={(e) => setOcrTextInput(e.target.value)}
-                rows={4}
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-slate-300 font-mono text-[11px] focus:outline-none focus:border-indigo-500"
+                rows={3}
+                className="w-full bg-[#111216] border border-[#232530] rounded-md p-2.5 text-[#ededef] font-mono text-[11px] focus:outline-none focus:border-[#373a4a]"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
+              className="w-full py-2 rounded-md bg-[#ededef] text-[#0d0e11] font-semibold hover:bg-white transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>Verify & Add to Vault</span>
+              Parse & Save to Vault
             </button>
 
-            {isSuccessModal && (
-              <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2 animate-fade-in">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Document processed and verified by regex engine!</span>
+            {justAdded && (
+              <div className="text-[11px] text-[#2eb88a] font-mono text-center">
+                ✓ Document verified and added to vault.
               </div>
             )}
           </form>
         </div>
 
-        {/* Vault Document Cards */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-white flex items-center gap-2">
-                <FileCheck2 className="w-5 h-5 text-emerald-400" />
-                Verified Entity Documents ({orgDocs.length})
-              </h3>
-              <span className="text-xs text-slate-400 font-mono">Vault for {currentOrg.name}</span>
-            </div>
+        {/* Vault Table */}
+        <div className="lg:col-span-7 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-[#1e2029] pb-3">
+            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
+              Verified Documents ({orgDocs.length})
+            </h3>
+            <span className="text-[10px] font-mono text-[#5e6170]">{currentOrg.name}</span>
+          </div>
 
-            <div className="space-y-3">
-              {orgDocs.map(doc => (
-                <div
-                  key={doc.id}
-                  className="p-4 rounded-2xl bg-slate-800/70 border border-slate-700/80 hover:border-slate-600 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-mono">
-                        {doc.docType.replace(/_/g, ' ')}
-                      </span>
-                      <span className="text-xs text-slate-400 font-mono">
-                        Uploaded: {formatDate(doc.uploadedAt)}
-                      </span>
-                    </div>
-
-                    <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-slate-400" />
-                      {doc.fileName}
-                    </h4>
-
-                    {/* Extracted ID & Snippet */}
-                    {doc.ocrExtractedData && (
-                      <div className="text-xs space-y-1 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                        {doc.ocrExtractedData.extractedId && (
-                          <div className="font-mono text-emerald-400 font-bold">
-                            Extracted ID: {doc.ocrExtractedData.extractedId}
-                          </div>
-                        )}
-                        {doc.ocrExtractedData.rawTextSnippet && (
-                          <p className="text-[11px] text-slate-400 font-mono line-clamp-2">
-                            &quot;{doc.ocrExtractedData.rawTextSnippet}&quot;
-                          </p>
-                        )}
-                      </div>
-                    )}
+          <div className="space-y-2.5">
+            {orgDocs.map(doc => (
+              <div
+                key={doc.id}
+                className="p-3 rounded-lg bg-[#111216] border border-[#1e2029] flex items-center justify-between gap-4"
+              >
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-[#5e6170] uppercase">
+                      {doc.docType.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#5e6170]">
+                      {formatDate(doc.uploadedAt)}
+                    </span>
                   </div>
-
-                  <div className="flex items-center gap-3 self-end md:self-center">
-                    <div className="text-right font-mono text-xs">
-                      {doc.verificationStatus === "VERIFIED" ? (
-                        <span className="text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Verified ({doc.ocrExtractedData?.confidenceScore}%)
-                        </span>
-                      ) : (
-                        <span className="text-rose-400 bg-rose-950/60 border border-rose-500/30 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1">
-                          <XCircle className="w-3.5 h-3.5" /> Failed Regex
-                        </span>
-                      )}
+                  <div className="font-semibold text-xs text-[#ededef] truncate">{doc.fileName}</div>
+                  {doc.ocrExtractedData?.extractedId && (
+                    <div className="font-mono text-[#2eb88a] text-[11px]">
+                      ID: {doc.ocrExtractedData.extractedId}
                     </div>
-                  </div>
+                  )}
                 </div>
-              ))}
 
-              {orgDocs.length === 0 && (
-                <div className="p-12 text-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-400 text-xs">
-                  No documents in vault. Upload one using the form on the left.
+                <div className="flex-shrink-0">
+                  <span className={cn(
+                    "text-[10px] font-mono font-semibold px-2 py-0.5 rounded",
+                    doc.verificationStatus === "VERIFIED" ? "bg-[#13231e] text-[#2eb88a]" : "bg-[#29171b] text-[#ef4444]"
+                  )}>
+                    {doc.verificationStatus}
+                  </span>
                 </div>
-              )}
-            </div>
+              </div>
+            ))}
+
+            {orgDocs.length === 0 && (
+              <div className="p-8 text-center text-xs text-[#5e6170]">
+                No documents in vault. Use the upload panel on the left to add one.
+              </div>
+            )}
           </div>
         </div>
       </div>

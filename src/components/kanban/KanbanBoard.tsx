@@ -7,24 +7,22 @@ import { formatINR, formatDate } from "@/lib/utils";
 import { verifyAuditChainIntegrity } from "@/lib/fsm/state-machine";
 import { 
   ShieldCheck, 
-  CheckCircle2, 
+  Check, 
   AlertTriangle, 
-  ArrowRight, 
   Hash, 
   X,
   FileCheck2,
-  Lock,
   ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const COLUMNS: { state: ApplicationState; label: string; color: string; desc: string }[] = [
-  { state: "Discovered", label: "Discovered", color: "border-sky-500/40 text-sky-400 bg-sky-500/10", desc: "Matched by AST engine" },
-  { state: "Docs Verified", label: "Docs Verified", color: "border-indigo-500/40 text-indigo-400 bg-indigo-500/10", desc: "OCR regex checked" },
-  { state: "Drafting", label: "Drafting", color: "border-amber-500/40 text-amber-400 bg-amber-500/10", desc: "AI proposal & budget" },
-  { state: "Applied", label: "Applied", color: "border-purple-500/40 text-purple-400 bg-purple-500/10", desc: "Filing ref registered" },
-  { state: "Under Review", label: "Under Review", color: "border-blue-500/40 text-blue-400 bg-blue-500/10", desc: "Govt desk/field audit" },
-  { state: "Sanctioned", label: "Sanctioned", color: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10", desc: "Ledger unlocked" }
+const COLUMNS: { state: ApplicationState; label: string; countColor: string }[] = [
+  { state: "Discovered", label: "Discovered", countColor: "text-[#8b8d98]" },
+  { state: "Docs Verified", label: "Docs Verified", countColor: "text-[#3b82f6]" },
+  { state: "Drafting", label: "Drafting", countColor: "text-[#f59e0b]" },
+  { state: "Applied", label: "Applied", countColor: "text-[#8b5cf6]" },
+  { state: "Under Review", label: "Under Review", countColor: "text-[#06b6d4]" },
+  { state: "Sanctioned", label: "Sanctioned", countColor: "text-[#2eb88a]" }
 ];
 
 export function KanbanBoard() {
@@ -32,7 +30,7 @@ export function KanbanBoard() {
   const [selectedAppForAudit, setSelectedAppForAudit] = useState<Application | null>(null);
   const [auditVerification, setAuditVerification] = useState<{ isValid: boolean; error?: string } | null>(null);
   
-  // Transition modal state
+  // Transition state
   const [transitioningApp, setTransitioningApp] = useState<{ app: Application; targetState: ApplicationState } | null>(null);
   const [actionNote, setActionNote] = useState("");
   const [extAppIdInput, setExtAppIdInput] = useState("");
@@ -74,31 +72,24 @@ export function KanbanBoard() {
   return (
     <div className="space-y-6">
       {/* Board Columns Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-start">
         {COLUMNS.map(col => {
           const colApps = orgApps.filter(a => a.currentState === col.state);
           return (
             <div 
               key={col.state} 
-              className="bg-[#0e111a] border border-[#1a202e] rounded-2xl p-3 flex flex-col min-h-[500px] shadow-sm"
+              className="bg-[#14151a] border border-[#232530] rounded-xl p-3 flex flex-col min-h-[480px] text-xs"
             >
               {/* Column Header */}
-              <div className="pb-2.5 mb-2.5 border-b border-[#1a202e] flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("px-2 py-0.5 rounded-full text-[11px] font-bold border font-mono", col.color)}>
-                      {col.label}
-                    </span>
-                    <span className="text-[10px] font-mono font-bold text-slate-400 bg-[#161a26] px-1.5 py-0.5 rounded">
-                      {colApps.length}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">{col.desc}</p>
-                </div>
+              <div className="pb-2.5 mb-2.5 border-b border-[#1e2029] flex items-center justify-between">
+                <span className="font-semibold text-xs text-[#ededef]">{col.label}</span>
+                <span className={cn("font-mono text-[11px] font-semibold", col.countColor)}>
+                  {colApps.length}
+                </span>
               </div>
 
               {/* Cards List */}
-              <div className="flex-1 space-y-2.5">
+              <div className="space-y-2 flex-1">
                 {colApps.map(app => {
                   const scheme = schemes.find(s => s.id === app.schemeId);
                   const readiness = scheme ? getOrgDocumentReadiness(scheme.id) : null;
@@ -111,23 +102,21 @@ export function KanbanBoard() {
                   return (
                     <div 
                       key={app.id} 
-                      className="bg-[#131722] hover:bg-[#171d2b] border border-[#1f2638] rounded-xl p-3 space-y-2.5 transition-all shadow-sm group"
+                      className="bg-[#111216] hover:bg-[#1a1c24] border border-[#1e2029] hover:border-[#2a2c38] rounded-lg p-3 space-y-2 transition-colors"
                     >
                       <div>
-                        <div className="flex items-center justify-between gap-1 text-[10px] text-slate-400 mb-1">
-                          <span className="font-mono text-emerald-400 font-bold">{app.id}</span>
-                          <span className="bg-[#0a0c12] px-1.5 py-0.5 rounded font-mono">
-                            {formatDate(app.updated_at)}
-                          </span>
+                        <div className="flex items-center justify-between text-[10px] text-[#5e6170] font-mono mb-1">
+                          <span>{app.id}</span>
+                          <span>{formatDate(app.updated_at)}</span>
                         </div>
-                        <h4 className="font-bold text-xs text-white line-clamp-2 leading-snug">
+                        <h4 className="font-medium text-xs text-[#ededef] line-clamp-2 leading-snug">
                           {scheme?.title || app.schemeId}
                         </h4>
-                        <div className="text-[11px] text-slate-300 mt-1 flex items-center gap-1 font-mono">
-                          <span>Req:</span>
-                          <strong className="text-white">{formatINR(app.requestedAmount, true)}</strong>
+                        <div className="text-[11px] font-mono text-[#8b8d98] mt-1">
+                          <span>Req: </span>
+                          <strong className="text-[#ededef]">{formatINR(app.requestedAmount, true)}</strong>
                           {app.sanctionedAmount && (
-                            <span className="text-emerald-400 ml-1 font-bold">
+                            <span className="text-[#2eb88a] ml-1 font-bold">
                               (Sanctioned: {formatINR(app.sanctionedAmount, true)})
                             </span>
                           )}
@@ -136,42 +125,36 @@ export function KanbanBoard() {
 
                       {/* Document Readiness Bar */}
                       {readiness && (
-                        <div className="p-1.5 rounded-lg bg-[#090b10] border border-[#191e2b] text-[10px] flex items-center justify-between">
-                          <span className="flex items-center gap-1 text-slate-400">
-                            <FileCheck2 className="w-3 h-3 text-indigo-400" />
-                            Readiness:
-                          </span>
-                          <span className={cn(
-                            "font-bold font-mono",
-                            readiness.score >= 75 ? "text-emerald-400" : "text-amber-400"
-                          )}>
+                        <div className="text-[10px] text-[#5e6170] font-mono flex items-center justify-between pt-1 border-t border-[#1e2029]">
+                          <span>Readiness:</span>
+                          <span className={readiness.score >= 75 ? "text-[#2eb88a]" : "text-[#f59e0b]"}>
                             {readiness.score}% ({readiness.mandatoryVerified}/{readiness.mandatoryTotal})
                           </span>
                         </div>
                       )}
 
-                      {/* External Reference Pill */}
+                      {/* External ID */}
                       {app.externalApplicationId && (
-                        <div className="text-[10px] text-slate-400 bg-purple-950/20 border border-purple-800/30 px-2 py-0.5 rounded font-mono truncate">
-                          Ref: <span className="text-purple-300 font-semibold">{app.externalApplicationId}</span>
+                        <div className="text-[10px] font-mono text-[#5e6170] truncate">
+                          Ref: {app.externalApplicationId}
                         </div>
                       )}
 
-                      {/* Footer Actions */}
-                      <div className="pt-2 border-t border-[#1a202e] flex items-center justify-between gap-1">
+                      {/* Action Bar */}
+                      <div className="pt-2 border-t border-[#1e2029] flex items-center justify-between">
                         <button
                           onClick={() => handleOpenAuditModal(app)}
-                          className="text-[10px] text-slate-400 hover:text-cyan-300 flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-[#1b2233] transition-colors cursor-pointer"
-                          title="View SHA-256 Audit Trail"
+                          className="text-[10px] font-mono text-[#5e6170] hover:text-[#ededef] flex items-center gap-1 cursor-pointer"
+                          title="View SHA-256 Provenance Log"
                         >
-                          <Hash className="w-3 h-3 text-cyan-400" />
+                          <Hash className="w-3 h-3" />
                           <span>Audit</span>
                         </button>
 
                         {nextStates.length > 0 && (
                           <button
                             onClick={() => handleInitiateTransition(app, nextStates[0] as ApplicationState)}
-                            className="text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-md flex items-center gap-1 transition-all font-bold cursor-pointer"
+                            className="text-[10px] text-[#8b8d98] hover:text-[#ededef] bg-[#1a1c24] px-2 py-0.5 rounded border border-[#232530] flex items-center gap-1 cursor-pointer"
                           >
                             <span>Advance</span>
                             <ChevronRight className="w-3 h-3" />
@@ -183,8 +166,8 @@ export function KanbanBoard() {
                 })}
 
                 {colApps.length === 0 && (
-                  <div className="h-28 border-2 border-dashed border-[#1a202e] rounded-xl flex items-center justify-center text-[11px] text-slate-400 font-medium">
-                    No applications
+                  <div className="h-24 border border-dashed border-[#1e2029] rounded-lg flex items-center justify-center text-[10px] font-mono text-[#5e6170]">
+                    Empty
                   </div>
                 )}
               </div>
@@ -193,62 +176,39 @@ export function KanbanBoard() {
         })}
       </div>
 
-      {/* SHA-256 Audit Trail Modal */}
+      {/* SHA-256 Audit Modal */}
       {selectedAppForAudit && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#11141d] border border-[#232a3b] rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-4 border-b border-[#1e2433] flex items-center justify-between bg-[#0a0c12]">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[#14151a] border border-[#232530] rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden text-xs">
+            <div className="p-4 border-b border-[#1e2029] flex items-center justify-between bg-[#111216]">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    SHA-256 Audit Provenance Chain
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 bg-[#181d28] text-cyan-400 rounded">
-                      {selectedAppForAudit.id}
-                    </span>
-                  </h3>
-                </div>
+                <ShieldCheck className="w-4 h-4 text-[#2eb88a]" />
+                <h3 className="font-semibold text-xs text-[#ededef]">
+                  SHA-256 Cryptographic Audit Provenance
+                </h3>
+                <span className="font-mono text-[10px] text-[#5e6170]">{selectedAppForAudit.id}</span>
               </div>
-              <button 
-                onClick={() => setSelectedAppForAudit(null)}
-                className="p-1 rounded-lg bg-[#181d28] text-slate-400 hover:text-white cursor-pointer"
-              >
+              <button onClick={() => setSelectedAppForAudit(null)} className="text-[#5e6170] hover:text-[#ededef] cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Cryptographic Proof Header */}
-            <div className="p-3 bg-[#0c0e14] border-b border-[#1e2433]">
-              <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold bg-emerald-950/20 border border-emerald-500/30 p-2 rounded-xl">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>
-                  Mathematical Integrity Verified: All {selectedAppForAudit.stateHistory.length} state transitions form an unbroken cryptographic hash chain.
-                </span>
-              </div>
+            <div className="p-3 bg-[#111216] border-b border-[#1e2029] font-mono text-[11px] text-[#2eb88a]">
+              ✓ Hash chain intact: {selectedAppForAudit.stateHistory.length} state transitions verified.
             </div>
 
-            {/* Transition Step List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {selectedAppForAudit.stateHistory.map((entry, idx) => (
-                <div key={idx} className="bg-[#0e111a] border border-[#1e2433] rounded-xl p-3.5 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-[#1e2433] text-slate-200 font-mono font-bold flex items-center justify-center text-[10px]">
-                        #{idx + 1}
-                      </span>
-                      <span className="font-bold text-white">
-                        {entry.fromState} → <span className="text-emerald-400">{entry.toState}</span>
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-mono">{formatDate(entry.timestamp)}</span>
+                <div key={idx} className="bg-[#111216] border border-[#1e2029] rounded-lg p-3 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="text-[#ededef] font-semibold">
+                      #{idx + 1} {entry.fromState} → {entry.toState}
+                    </span>
+                    <span className="text-[#5e6170]">{formatDate(entry.timestamp)}</span>
                   </div>
-
-                  <p className="text-slate-300 text-[11px] pl-7">{entry.actionNote}</p>
-
-                  <div className="pl-7 pt-1 text-[9px] font-mono text-cyan-400 truncate">
-                    Hash: <span className="text-slate-300 font-semibold">{entry.hash}</span>
+                  <p className="text-[11px] text-[#8b8d98]">{entry.actionNote}</p>
+                  <div className="text-[9px] font-mono text-[#5e6170] truncate pt-0.5">
+                    Hash: {entry.hash}
                   </div>
                 </div>
               ))}
@@ -259,67 +219,67 @@ export function KanbanBoard() {
 
       {/* State Transition Guard Modal */}
       {transitioningApp && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#11141d] border border-[#232a3b] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-[#1e2433] pb-2.5">
-              <h3 className="font-bold text-sm text-white">Advance FSM Lifecycle State</h3>
-              <button onClick={() => setTransitioningApp(null)} className="text-slate-400 hover:text-white cursor-pointer">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[#14151a] border border-[#232530] rounded-xl max-w-md w-full p-5 shadow-xl space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-[#1e2029] pb-2.5">
+              <h3 className="font-semibold text-xs text-[#ededef]">Transition State Guard</h3>
+              <button onClick={() => setTransitioningApp(null)} className="text-[#5e6170] hover:text-[#ededef] cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <span className="text-slate-400 text-[11px]">Advancing To:</span>
-                <div className="font-bold text-emerald-400 text-sm mt-0.5">{transitioningApp.targetState}</div>
+                <span className="text-[#5e6170] text-[11px]">Advancing To:</span>
+                <div className="font-bold text-[#2eb88a] text-xs mt-0.5">{transitioningApp.targetState}</div>
               </div>
 
               {transitioningApp.targetState === "Applied" && (
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
-                    Government Portal Acknowledgement / Reference ID <span className="text-rose-400">*</span>
+                  <label className="block text-[#8b8d98] font-medium mb-1">
+                    Portal Filing Reference ID <span className="text-[#ef4444]">*</span>
                   </label>
                   <input
                     type="text"
                     value={extAppIdInput}
                     onChange={(e) => setExtAppIdInput(e.target.value)}
                     placeholder="e.g. ZED/2024/MH/99241"
-                    className="w-full bg-[#0c0e14] border border-[#1e2433] rounded-xl px-3 py-2 text-white font-mono focus:border-emerald-500 focus:outline-none"
+                    className="w-full bg-[#111216] border border-[#232530] rounded-md px-3 py-1.5 text-xs text-[#ededef] font-mono focus:border-[#373a4a] focus:outline-none"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">Required to satisfy deterministic FSM transition guard.</p>
+                  <p className="text-[10px] text-[#5e6170] mt-0.5">Required to satisfy deterministic FSM transition guard.</p>
                 </div>
               )}
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Audit Action Note</label>
+                <label className="block text-[#8b8d98] font-medium mb-1">Action Note</label>
                 <textarea
                   value={actionNote}
                   onChange={(e) => setActionNote(e.target.value)}
                   rows={2}
-                  className="w-full bg-[#0c0e14] border border-[#1e2433] rounded-xl px-3 py-2 text-white text-xs focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-[#111216] border border-[#232530] rounded-md px-3 py-1.5 text-xs text-[#ededef] focus:border-[#373a4a] focus:outline-none"
                 />
               </div>
 
               {transitionError && (
-                <div className="p-2.5 rounded-xl bg-rose-950/30 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <div className="p-2 rounded-md bg-[#161214] border border-[#331e24] text-[#f87171] text-[11px] flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{transitionError}</span>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1e2433]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1e2029]">
               <button
                 onClick={() => setTransitioningApp(null)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-[#181d28] cursor-pointer"
+                className="px-3 py-1.5 rounded-md text-[#8b8d98] hover:text-[#ededef] hover:bg-[#1a1c24] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmTransition}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-md bg-[#ededef] text-[#0d0e11] font-semibold hover:bg-white transition-colors cursor-pointer"
               >
-                Sign & Advance (SHA-256)
+                Sign & Advance
               </button>
             </div>
           </div>

@@ -6,14 +6,12 @@ import { AstNodeVisualizer } from "@/components/ast/AstNodeVisualizer";
 import { formatINR } from "@/lib/utils";
 import { 
   GitFork, 
-  CheckCircle2, 
-  XCircle, 
+  Check, 
+  X, 
   Layers, 
   Building2, 
-  ShieldCheck, 
-  Sparkles,
-  ArrowRight,
-  Info
+  Info,
+  ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,23 +23,17 @@ export default function EligibilityPage() {
   const evalResult = getOrgEvaluation(selectedScheme.id);
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-2">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Core Differentiator #1 • Explainable AST Engine</span>
-        </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white">
-          AST Eligibility Reasoning Trace
-        </h1>
-        <p className="text-sm text-slate-400">
-          Deterministic boolean and threshold tree evaluation showing why an entity qualifies or fails.
+        <h1 className="text-lg font-bold text-[#ededef]">AST Eligibility Reasoner</h1>
+        <p className="text-xs text-[#8b8d98]">
+          Deterministic boolean and threshold tree verification evaluated live against {currentOrg.name}.
         </p>
       </div>
 
-      {/* Scheme Selector Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+      {/* Scheme Selector Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#1e2029]">
         {schemes.map(scheme => {
           const res = getOrgEvaluation(scheme.id);
           const isSelected = scheme.id === selectedSchemeId;
@@ -50,118 +42,98 @@ export default function EligibilityPage() {
               key={scheme.id}
               onClick={() => setSelectedSchemeId(scheme.id)}
               className={cn(
-                "px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 flex-shrink-0 transition-all cursor-pointer",
+                "px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2 flex-shrink-0 transition-colors cursor-pointer",
                 isSelected
-                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-md"
-                  : "bg-slate-900/80 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
+                  ? "bg-[#1a1c24] text-[#ededef] border border-[#232530]"
+                  : "text-[#8b8d98] hover:text-[#ededef] hover:bg-[#14151a]"
               )}
             >
-              {res?.isEligible ? (
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <XCircle className="w-3.5 h-3.5 text-rose-400" />
-              )}
-              <span>{scheme.title.slice(0, 32)}...</span>
-              <span className="font-mono text-[10px] bg-slate-800 px-1.5 py-0.5 rounded">
-                {res?.matchScore}%
-              </span>
+              <span className={cn("w-1.5 h-1.5 rounded-full", res?.isEligible ? "bg-[#2eb88a]" : "bg-[#f59e0b]")} />
+              <span className="truncate max-w-[180px]">{scheme.title}</span>
+              <span className="text-[10px] font-mono text-[#5e6170]">{res?.matchScore}%</span>
             </button>
           );
         })}
       </div>
 
       {/* Main Analysis Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* AST Trace Tree */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-mono">
-                  {selectedScheme.sourcePortal}
-                </span>
-                <h2 className="text-xl font-bold text-white mt-1">
-                  {selectedScheme.title}
-                </h2>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-slate-400">Match Score</div>
-                <div className={cn("text-2xl font-black font-mono", evalResult?.isEligible ? "text-emerald-400" : "text-amber-400")}>
-                  {evalResult?.matchScore}%
-                </div>
-              </div>
+        <div className="lg:col-span-8 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1e2029]">
+            <div>
+              <span className="text-[10px] font-mono text-[#5e6170] uppercase">
+                {selectedScheme.sourcePortal}
+              </span>
+              <h2 className="text-sm font-semibold text-[#ededef] mt-0.5">
+                {selectedScheme.title}
+              </h2>
             </div>
 
-            {/* AST Visualizer */}
-            {evalResult && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                  <GitFork className="w-4 h-4 text-emerald-400" />
-                  <span>Interactive Node Hierarchy (Click arrows to collapse/expand):</span>
-                </div>
-                <AstNodeVisualizer trace={evalResult.trace} />
-              </div>
-            )}
+            <div className="text-right font-mono">
+              <span className={cn(
+                "text-xs px-2 py-0.5 rounded font-bold",
+                evalResult?.isEligible ? "bg-[#13231e] text-[#2eb88a] border border-[#1e3b2e]" : "bg-[#211a14] text-[#f59e0b] border border-[#382a1b]"
+              )}>
+                {evalResult?.isEligible ? "100% Eligible" : `${evalResult?.matchScore}% Match`}
+              </span>
+            </div>
           </div>
+
+          {/* AST Visualizer */}
+          {evalResult && (
+            <div className="space-y-2">
+              <div className="text-[11px] font-mono text-[#5e6170] uppercase">
+                Evaluation Syntax Tree:
+              </div>
+              <AstNodeVisualizer trace={evalResult.trace} />
+            </div>
+          )}
         </div>
 
         {/* Right Rail: Actionable Remediation Summary */}
-        <div className="space-y-6">
-          {/* Missing Requirements Box */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <Info className="w-4 h-4 text-cyan-400" />
-              Reasoning Engine Verdict
+        <div className="lg:col-span-4 bg-[#14151a] border border-[#232530] rounded-xl p-5 space-y-4 text-xs">
+          <div className="flex items-center gap-2 border-b border-[#1e2029] pb-3">
+            <Info className="w-4 h-4 text-[#8b8d98]" />
+            <h3 className="font-semibold text-xs text-[#ededef] uppercase font-mono">
+              Evaluation Breakdown
             </h3>
+          </div>
 
-            {evalResult?.isEligible ? (
-              <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-xs text-emerald-300 space-y-2">
-                <div className="font-bold flex items-center gap-1.5 text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                  100% Fully Qualified
-                </div>
-                <p>
-                  All AST branches passed. {currentOrg.name} meets all regulatory, turnover, and structural parameters for this scheme.
-                </p>
+          {evalResult?.isEligible ? (
+            <div className="p-3 rounded-lg bg-[#111614] border border-[#1e2e26] text-[#2eb88a] space-y-1">
+              <div className="font-semibold">All Constraints Met</div>
+              <p className="text-[11px] text-[#8b8d98]">
+                {currentOrg.name} meets all regulatory, turnover, and structure parameters for this scheme.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="text-[11px] font-mono text-[#ef4444]">
+                Unmet Conditions ({evalResult?.missingRequirements.length}):
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/30 text-xs text-rose-300">
-                  <div className="font-bold flex items-center gap-1.5 text-rose-400 mb-1">
-                    <XCircle className="w-4 h-4" />
-                    Unmet Criteria Detected
-                  </div>
-                  <p className="text-[11px] text-rose-300/80">
-                    The following AST condition nodes evaluated to false:
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  {evalResult?.missingRequirements.map((req, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-300 flex items-start gap-2">
-                      <span className="w-4 h-4 rounded-full bg-rose-500/20 text-rose-400 font-mono font-bold flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      <span>{req}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Passed Rules */}
-            <div className="pt-2">
-              <span className="text-[11px] font-semibold text-slate-400 block mb-2">
-                Passed Constraints ({evalResult?.passedRulesCount}/{evalResult?.totalRulesCount})
-              </span>
               <div className="space-y-1.5">
-                {evalResult?.criticalPasses.map((pass, idx) => (
-                  <div key={idx} className="text-xs text-slate-300 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                    <span className="truncate">{pass}</span>
+                {evalResult?.missingRequirements.map((req, i) => (
+                  <div key={i} className="p-2.5 rounded-md bg-[#161214] border border-[#331e24] text-[11px] text-[#f87171]">
+                    {req}
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Passed Rules */}
+          <div className="pt-2 space-y-1.5">
+            <span className="text-[10px] font-mono uppercase text-[#5e6170]">
+              Passed Rules ({evalResult?.passedRulesCount}/{evalResult?.totalRulesCount})
+            </span>
+            <div className="space-y-1">
+              {evalResult?.criticalPasses.map((pass, idx) => (
+                <div key={idx} className="text-[11px] text-[#8b8d98] flex items-center gap-1.5">
+                  <Check className="w-3 h-3 text-[#2eb88a] flex-shrink-0" />
+                  <span className="truncate">{pass}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

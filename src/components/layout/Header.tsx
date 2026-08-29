@@ -3,8 +3,7 @@
 import React from "react";
 import { useApp } from "@/context/AppContext";
 import { formatINR } from "@/lib/utils";
-import { Building2, ChevronDown, ShieldCheck, Award, Sparkles, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Building2, ChevronDown, Search, Command } from "lucide-react";
 
 export function Header() {
   const { organizations, currentOrg, setCurrentOrgId, applications } = useApp();
@@ -18,22 +17,17 @@ export function Header() {
   ).length;
 
   return (
-    <header className="h-16 border-b border-[#1a1f2c] bg-[#0c0e14]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-14 border-b border-[#1e2029] bg-[#0d0e11] px-6 flex items-center justify-between sticky top-0 z-30 text-xs">
       {/* Organization Switcher */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-          <Building2 className="w-4 h-4" />
-        </div>
-
-        <div>
-          <span className="text-[9px] uppercase font-bold text-slate-400 font-mono tracking-wider block">
-            Current Entity Profile
-          </span>
+        <div className="flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-[#5e6170]" />
+          <span className="text-[#5e6170] text-[11px] font-mono uppercase">Entity:</span>
           <div className="relative inline-block">
             <select
               value={currentOrg.id}
               onChange={(e) => setCurrentOrgId(e.target.value)}
-              className="appearance-none bg-[#141923] hover:bg-[#1a202d] text-white font-bold text-xs pl-2.5 pr-7 py-1 rounded-lg border border-[#232a3b] focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+              className="appearance-none bg-[#14151a] hover:bg-[#1a1c24] text-[#ededef] font-medium text-xs pl-2.5 pr-7 py-1 rounded-md border border-[#232530] focus:outline-none focus:border-[#373a4a] transition-colors cursor-pointer"
             >
               {organizations.map(org => (
                 <option key={org.id} value={org.id}>
@@ -41,43 +35,31 @@ export function Header() {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3 h-3 text-[#8b8d98] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
 
-        {/* Entity Highlights */}
-        <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#1e2433] text-xs">
-          <span className="px-2 py-0.5 rounded-md bg-[#131620] text-slate-300 font-medium border border-[#1e2433]">
-            {currentOrg.state}
-          </span>
-          <span className="px-2 py-0.5 rounded-md bg-[#131620] text-slate-300 font-medium border border-[#1e2433]">
-            Turnover: <strong className="text-white font-mono">{formatINR(currentOrg.turnoverInr, true)}</strong>
-          </span>
-          {currentOrg.complianceFlags.has80G && (
-            <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> 80G Certified
-            </span>
-          )}
+        <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#1e2029] text-[11px] text-[#8b8d98]">
+          <span>{currentOrg.state}</span>
+          <span>•</span>
+          <span>Turnover: <strong className="text-[#ededef] font-mono">{formatINR(currentOrg.turnoverInr, true)}</strong></span>
         </div>
       </div>
 
-      {/* Quick Metrics */}
+      {/* Right Stats & Quick Search */}
       <div className="flex items-center gap-5">
-        <div className="text-right hidden sm:block">
-          <div className="text-[10px] text-slate-400 font-medium">In Pipeline</div>
-          <div className="text-xs font-bold text-amber-400 font-mono">
-            {activeApps} Active Grants
+        <div className="hidden sm:flex items-center gap-4 text-[11px] font-mono">
+          <div>
+            <span className="text-[#5e6170]">Pipeline: </span>
+            <span className="text-[#ededef] font-medium">{activeApps} active</span>
+          </div>
+          <div>
+            <span className="text-[#5e6170]">Sanctioned: </span>
+            <span className="text-[#2eb88a] font-medium">{formatINR(totalSanctioned, true)}</span>
           </div>
         </div>
 
-        <div className="text-right hidden sm:block">
-          <div className="text-[10px] text-slate-400 font-medium">Sanctioned Grants</div>
-          <div className="text-xs font-bold text-emerald-400 font-mono">
-            {formatINR(totalSanctioned, true)}
-          </div>
-        </div>
-
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-black flex items-center justify-center text-xs shadow-md shadow-emerald-500/10">
+        <div className="w-6 h-6 rounded-full bg-[#1e2029] text-[#ededef] font-mono text-[10px] flex items-center justify-center font-bold">
           GP
         </div>
       </div>
