@@ -25,6 +25,7 @@ interface AppContextType {
   setCurrentOrgId: (id: string) => void;
   schemes: Scheme[];
   addScheme: (scheme: Scheme) => void;
+  batchAddSchemes: (newSchemes: Scheme[]) => void;
   documents: UserDocument[];
   addDocument: (docType: DocumentType, fileName: string, rawOcrText?: string) => void;
   applications: Application[];
@@ -55,6 +56,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addScheme = (newScheme: Scheme) => {
     setSchemes(prev => [newScheme, ...prev]);
+  };
+
+  const batchAddSchemes = (newSchemes: Scheme[]) => {
+    setSchemes(prev => {
+      const existingIds = new Set(prev.map(s => s.id));
+      const filteredNew = newSchemes.filter(s => !existingIds.has(s.id));
+      return [...filteredNew, ...prev];
+    });
   };
 
   const addDocument = (docType: DocumentType, fileName: string, rawOcrText: string = "") => {
@@ -190,6 +199,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setCurrentOrgId,
         schemes,
         addScheme,
+        batchAddSchemes,
         documents,
         addDocument,
         applications,

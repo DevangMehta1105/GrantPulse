@@ -14,16 +14,30 @@ import {
   ScrollText, 
   ShieldCheck,
   Landmark,
-  FileSpreadsheet
+  FileSpreadsheet,
+  DownloadCloud
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NAV_SECTIONS = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  count?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
     title: "OVERVIEW",
     items: [
       { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Grant Catalog", href: "/schemes", icon: Layers, count: "6" },
+      { name: "Grant Catalog", href: "/schemes", icon: Layers },
+      { name: "Portal Harvester", href: "/ingestion", icon: DownloadCloud },
       { name: "AST Reasoner", href: "/eligibility", icon: GitFork },
       { name: "What-If Simulator", href: "/counterfactual", icon: Sparkles }
     ]

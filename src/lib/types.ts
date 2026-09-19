@@ -106,6 +106,7 @@ export interface Scheme {
   eligibilityAst: AstGroupNode;
   requiredDocuments: RequiredDocumentDef[];
   tags: string[];
+  officialPortalUrl?: string;
   created_at: string;
 }
 
