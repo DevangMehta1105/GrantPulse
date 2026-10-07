@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/context/AuthContext";
-import { Header } from "@/components/layout/Header";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: "GrantPulse — Grant & Compliance Case Files",
@@ -26,26 +26,9 @@ export default function RootLayout({
       <body className="bg-[var(--paper)] text-[var(--ink)] min-h-screen flex flex-col antialiased selection:bg-[var(--rule)] selection:text-[var(--ink)]">
         <AppProvider>
           <AuthProvider>
-            <Header />
-            <main className="flex-1">
+            <AppShell>
               {children}
-            </main>
-            <footer className="border-t border-[var(--rule)] py-9 text-[13px] text-[var(--ink-soft)] bg-[var(--paper)]">
-              <div className="wrap flex justify-between flex-wrap gap-3">
-                <span>GrantPulse — built for Indian MSMEs &amp; NGOs</span>
-                <span className="space-x-4">
-                  <a href="/login" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Security Clearance</a>
-                  <span>·</span>
-                  <a href="/eligibility" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">How matching works</a>
-                  <span>·</span>
-                  <a href="/schemes" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Schemes Catalog</a>
-                  <span>·</span>
-                  <a href="/pipeline" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Pipeline Tracker</a>
-                  <span>·</span>
-                  <a href="/compliance" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">GFR 12-A Ledger</a>
-                </span>
-              </div>
-            </footer>
+            </AppShell>
           </AuthProvider>
         </AppProvider>
       </body>

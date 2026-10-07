@@ -23,6 +23,10 @@ export function Header() {
     { name: "Harvester", href: "/ingestion" }
   ];
 
+  if (pathname === "/login" || pathname === "/signup") {
+    return null;
+  }
+
   return (
     <header className="border-b border-[var(--rule)] bg-[var(--paper)] sticky top-0 z-40">
       <div className="wrap flex items-center justify-between h-16">

@@ -35,7 +35,8 @@ export default function LoginPage() {
     setIsSubmitting(false);
 
     if (res.success) {
-      router.push("/pipeline");
+      const redirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+      router.push(redirect && redirect.startsWith("/") ? redirect : "/pipeline");
     } else {
       setErrorMsg(res.error || "Authentication clearance failed. Please verify credentials.");
     }
