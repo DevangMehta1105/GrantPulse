@@ -31,7 +31,7 @@ export default function CompliancePage() {
   const { currentOrg, applications, schemes, expenses, addExpense } = useApp();
 
   const sanctionedApps = applications.filter(
-    a => a.orgId === currentOrg.id && (a.currentState === "Sanctioned" || a.sanctionedAmount)
+    a => a.orgId === currentOrg?.id && (a.currentState === "Sanctioned" || a.sanctionedAmount)
   );
 
   const [selectedAppId, setSelectedAppId] = useState<string>(
@@ -57,6 +57,45 @@ export default function CompliancePage() {
   const getCategorySpent = (category: string) => {
     return appExpenses.filter(e => e.category === category).reduce((sum, e) => sum + e.amount, 0);
   };
+
+  if (!applications || applications.length === 0) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-6 md:px-8 py-8 space-y-8 font-sans">
+        <div className="border-b border-[var(--rule)] pb-6">
+          <div className="font-mono text-[11px] tracking-widest uppercase text-[var(--stamp)] mb-1 flex items-center gap-2 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-[var(--stamp)] animate-pulse"></span>
+            Pillar G · Post-Sanction Fund Utilization &amp; GFR 12-A Compliance
+          </div>
+          <h1 className="text-3xl font-serif font-bold text-[var(--ink)] tracking-tight">
+            Fund Utilization &amp; GFR 12-A Ledger
+          </h1>
+          <p className="text-sm text-[var(--ink-soft)] mt-1 max-w-3xl">
+            Track grant disbursements, enforce statutory category budget caps under General Financial Rules, and export formal Form GFR 12-A Utilization Certificates.
+          </p>
+        </div>
+
+        <div className="bg-[var(--paper-deep)] border border-dashed border-[var(--rule)] rounded-lg p-16 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-[var(--paper)] border border-[var(--rule)] flex items-center justify-center mx-auto text-[var(--stamp)]">
+            <ScrollText className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-[var(--ink)]">No Active Grant Applications or Sanctions</h3>
+          <p className="text-sm text-[var(--ink-soft)] max-w-md mx-auto">
+            Once you submit an application and receive a grant sanction, your GFR 12-A utilization ledger and category cap tracker will be initialized here.
+          </p>
+          <div className="pt-2">
+            <a
+              href="/schemes"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded transition-colors shadow-sm"
+            >
+              <span>EXPLORE SCHEMES &amp; APPLY</span>
+              <ArrowRight className="w-4 h-4 text-[var(--stamp)]" />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { SEED_SCHEMES } from "@/data/seed-schemes";
+import { fetchSchemesFromDb } from "@/lib/supabase/service";
 
 export async function GET() {
+  const schemes = await fetchSchemesFromDb();
   return NextResponse.json({
     success: true,
-    total: SEED_SCHEMES.length,
-    data: SEED_SCHEMES
+    total: schemes.length,
+    data: schemes
   });
 }
 

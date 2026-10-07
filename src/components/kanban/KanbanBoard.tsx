@@ -278,7 +278,7 @@ export function KanbanBoard() {
     useSensor(KeyboardSensor)
   );
 
-  const orgApps = applications.filter(a => a.orgId === currentOrg.id);
+  const orgApps = applications.filter(a => a.orgId === currentOrg?.id);
 
   const handleOpenAuditModal = async (app: Application) => {
     setSelectedAppForAudit(app);
@@ -369,7 +369,7 @@ export function KanbanBoard() {
             <span>Drag cards across columns to advance lifecycle states. Every transition generates a verifiable SHA-256 state hash.</span>
           </div>
           <span className="text-[11px] text-[var(--ink)] font-bold whitespace-nowrap">
-            {orgApps.length} Applications for {currentOrg.name}
+            {orgApps.length} Applications for {currentOrg?.name || "Your Organization"}
           </span>
         </div>
 

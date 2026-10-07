@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { SEED_ORGANIZATIONS } from "@/data/seed-organizations";
-import { SEED_SCHEMES } from "@/data/seed-schemes";
+import { fetchOrganizationsFromDb, fetchSchemesFromDb } from "@/lib/supabase/service";
 import { synthesizeGrantDossier } from "@/lib/copilot/synthesizer";
 import { ProposalTone } from "@/lib/copilot/types";
 
@@ -9,8 +8,20 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const { orgId, schemeId, tone = "formal_gov", customNotes = "" } = body;
 
-    const org = SEED_ORGANIZATIONS.find(o => o.id === orgId) || SEED_ORGANIZATIONS[1];
-    const scheme = SEED_SCHEMES.find(s => s.id === schemeId) || SEED_SCHEMES[0];
+    const [orgs, schemes] = await Promise.all([
+      fetchOrganizationsFromDb(),
+      fetchSchemesFromDb()
+    ]);
+
+    const org = orgs.find(o => o.id === orgId) || orgs[0];
+    const scheme = schemes.find(s => s.id === schemeId) || schemes[0];
+
+    if (!org || !scheme) {
+      return NextResponse.json(
+        { success: false, error: "Both an enrolled organization and a scheme are required to generate a proposal." },
+        { status: 400 }
+      );
+    }
 
     const dossier = synthesizeGrantDossier(org, scheme, tone as ProposalTone, customNotes);
 

@@ -238,7 +238,7 @@ export function Header() {
               >
                 <Landmark className="w-3.5 h-3.5 text-[#2A2621] flex-shrink-0" strokeWidth={1.8} />
                 <span className="truncate font-mono">
-                  {currentOrg.name} ({currentOrg.entityType})
+                  {organizations.length > 0 ? `${currentOrg.name} (${currentOrg.entityType})` : "Enroll Entity"}
                 </span>
                 <ChevronDown 
                   className={`w-3 h-3 text-[#5A554C] flex-shrink-0 transition-transform duration-200 ${
@@ -254,6 +254,11 @@ export function Header() {
                     Active Entity Profile:
                   </div>
                   <div className="max-h-56 overflow-y-auto space-y-0.5">
+                    {organizations.length === 0 && (
+                      <div className="px-2.5 py-3 text-center text-[11px] text-[#5A554C]">
+                        No entities enrolled yet.
+                      </div>
+                    )}
                     {organizations.map((org) => {
                       const isCurrent = org.id === currentOrg.id;
                       return (

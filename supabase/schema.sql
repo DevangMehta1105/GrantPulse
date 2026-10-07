@@ -133,122 +133,18 @@ CREATE POLICY "Allow public update schemes" ON schemes FOR UPDATE USING (true);
 CREATE POLICY "Allow public read user_documents" ON user_documents FOR SELECT USING (true);
 CREATE POLICY "Allow public insert user_documents" ON user_documents FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update user_documents" ON user_documents FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete user_documents" ON user_documents FOR DELETE USING (true);
 
 CREATE POLICY "Allow public read applications" ON applications FOR SELECT USING (true);
 CREATE POLICY "Allow public insert applications" ON applications FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update applications" ON applications FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete applications" ON applications FOR DELETE USING (true);
 
 CREATE POLICY "Allow public read grant_expenses" ON grant_expenses FOR SELECT USING (true);
 CREATE POLICY "Allow public insert grant_expenses" ON grant_expenses FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update grant_expenses" ON grant_expenses FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete grant_expenses" ON grant_expenses FOR DELETE USING (true);
 
--- ==============================================================================
--- Initial High-Entropy Seed Data
--- ==============================================================================
+CREATE POLICY "Allow public delete organizations" ON organizations FOR DELETE USING (true);
+CREATE POLICY "Allow public delete schemes" ON schemes FOR DELETE USING (true);
 
--- Seed Organizations
-INSERT INTO organizations (id, name, entity_type, turnover_inr, incorporation_date, years_of_operation, udyam_tier, state, sector, compliance_flags, mission_description, contact_email)
-VALUES 
-(
-    'org-vidyut-ev',
-    'Vidyut Micro Mobility Private Limited',
-    'Private Limited',
-    42000000,
-    '2022-09-01',
-    2,
-    'Micro',
-    'Karnataka',
-    'CleanTech & EV Manufacturing',
-    '{"hasGstin": true, "gstin": "29AABCV9821K1Z3", "hasPan": true, "pan": "AAACG0567K", "hasUdyam": true, "udyamNumber": "UDYAM-KR-03-0048192", "has12A": false, "has80G": false, "hasNgoDarpan": false, "hasFcra": false, "hasCsr1": false, "isWomanLed": false, "isScStLed": false, "isGreenfield": true}'::jsonb,
-    'Designing and manufacturing ruggedized solar-assisted electric freight two-wheelers for tier-2/3 agricultural and parcel logistics across Southern India.',
-    'compliance@vidyutmobility.in'
-),
-(
-    'org-arogya-trust',
-    'Arogya Rural Healthcare & Water Trust',
-    'Trust',
-    18500000,
-    '2019-04-12',
-    5,
-    'None',
-    'Maharashtra',
-    'Healthcare, WASH & Rural Livelihoods',
-    '{"hasGstin": true, "gstin": "27AAATA4921K1Z9", "hasPan": true, "pan": "AABTA4921K", "hasUdyam": false, "has12A": true, "reg12ANumber": "AABTA4921KE20214", "has80G": true, "reg80GNumber": "AABTA4921KG20218", "hasNgoDarpan": true, "ngoDarpanId": "MH/2021/0289141", "hasFcra": false, "hasCsr1": true, "csr1Number": "CSR00049281", "isWomanLed": true, "isScStLed": false, "isGreenfield": false}'::jsonb,
-    'Providing point-of-use solar-powered UV water filtration plants and primary diagnostic maternal health camps in tribal villages of Gadchiroli and Nandurbar.',
-    'director@arogyatrust.org'
-),
-(
-    'org-greenroots-ngo',
-    'GreenRoots Agro Ecology Society',
-    'Society',
-    8200000,
-    '2021-06-15',
-    3,
-    'None',
-    'Rajasthan',
-    'Agritech & Climate Resilience',
-    '{"hasGstin": false, "hasPan": true, "pan": "AABTG8812M", "hasUdyam": false, "has12A": true, "reg12ANumber": "AABTG8812ME20221", "has80G": false, "hasNgoDarpan": true, "ngoDarpanId": "RJ/2022/0319482", "hasFcra": false, "hasCsr1": true, "csr1Number": "CSR00088192", "isWomanLed": false, "isScStLed": false, "isGreenfield": false}'::jsonb,
-    'Empowering arid smallholder farmers with regenerative millet agroforestry, drip fertigation units, and community seed banks in Western Rajasthan.',
-    'projects@greenrootsagro.org'
-)
-ON CONFLICT (id) DO UPDATE SET 
-    name = EXCLUDED.name,
-    turnover_inr = EXCLUDED.turnover_inr,
-    compliance_flags = EXCLUDED.compliance_flags;
-
--- Seed Schemes
-INSERT INTO schemes (id, source_type, source_portal, title, ministry_or_funder, description, grant_type, max_funding_amount, deadline, sector, official_portal_url, eligibility_ast, required_documents, tags)
-VALUES
-(
-    'scheme-msme-zed-subsidy',
-    'scraped',
-    'myScheme.gov.in',
-    'MSME Sustainable (ZED) Certification Scheme 2.0',
-    'Ministry of Micro, Small and Medium Enterprises',
-    'Financial assistance up to ₹5.00 Lakhs for obtaining Bronze, Silver, and Gold Zero Defect Zero Effect (ZED) certification with 80% subsidy for Micro enterprises.',
-    'Subsidy',
-    500000,
-    '2026-12-31',
-    ARRAY['Manufacturing & CleanTech', 'General MSME'],
-    'https://zed.msme.gov.in',
-    '{"operator": "AND", "children": [{"field": "complianceFlags.hasUdyam", "operator": "EQUALS", "value": true, "description": "Must hold an active Udyam Registration"}, {"field": "turnoverInr", "operator": "LTE", "value": 500000000, "description": "Turnover must not exceed ₹50.00 Cr"}, {"field": "complianceFlags.hasGstin", "operator": "EQUALS", "value": true, "description": "Must possess a verified GSTIN"}]}'::jsonb,
-    '[{"docType": "UDYAM_CERTIFICATE", "name": "Udyam Registration Certificate", "isMandatory": true, "description": "MoMSME Udyam certificate"}, {"docType": "GSTIN_CERTIFICATE", "name": "GST Registration (REG-06)", "isMandatory": true, "description": "Form REG-06 showing principal place of business"}, {"docType": "PAN_CARD", "name": "PAN Card", "isMandatory": true, "description": "Original entity PAN"}]'::jsonb,
-    ARRAY['myScheme.gov.in', 'Subsidy', 'ZED 2.0', 'MoMSME']
-),
-(
-    'scheme-tata-wash-csr',
-    'scraped',
-    'csrxchange.gov.in',
-    'Tata Trusts Community Safe Drinking Water & Health Grant 2026',
-    'Tata Trusts & Allied Philanthropies',
-    'Multi-year CSR grant support up to ₹1.25 Crores for grassroots NGOs deploying scalable community water filtration, WASH infrastructure, and maternal healthcare interventions.',
-    'CSR Grant',
-    12500000,
-    '2026-10-15',
-    ARRAY['WASH, Healthcare & Rural Livelihoods', 'Philanthropy'],
-    'https://www.csrxchange.gov.in',
-    '{"operator": "AND", "children": [{"field": "entityType", "operator": "IN", "value": ["Trust", "Society", "Section 8"], "description": "Must be a registered Non-Profit entity"}, {"field": "complianceFlags.has12A", "operator": "EQUALS", "value": true, "description": "Active Section 12A / 12AB tax exemption"}, {"field": "complianceFlags.has80G", "operator": "EQUALS", "value": true, "description": "Active Section 80G Tax Exemption Certificate"}, {"field": "complianceFlags.hasCsr1", "operator": "EQUALS", "value": true, "description": "Valid MCA Form CSR-1 Registration"}, {"field": "complianceFlags.hasNgoDarpan", "operator": "EQUALS", "value": true, "description": "Active NITI Aayog NGO Darpan registration"}]}'::jsonb,
-    '[{"docType": "12A_REGISTRATION", "name": "Form 10AC Section 12A Order", "isMandatory": true, "description": "Income tax 12A registration"}, {"docType": "80G_REGISTRATION", "name": "Form 10AC Section 80G Order", "isMandatory": true, "description": "80G donor tax exemption"}, {"docType": "CSR1_CERTIFICATE", "name": "MCA Form CSR-1 Letter", "isMandatory": true, "description": "CSR registration letter from MCA"}, {"docType": "NGO_DARPAN_CERTIFICATE", "name": "NITI Aayog Darpan Certificate", "isMandatory": true, "description": "NGO Darpan acknowledgment"}]'::jsonb,
-    ARRAY['csrxchange.gov.in', 'CSR Grant', 'Tata Trusts', '12A/80G']
-),
-(
-    'scheme-sisfs-dpiit',
-    'scraped',
-    'startupindia.gov.in',
-    'Startup India Seed Fund Scheme (SISFS) - Prototyping & Scale-up',
-    'Department for Promotion of Industry and Internal Trade (DPIIT)',
-    'Grant assistance up to ₹20.00 Lakhs for validation of Proof of Concept and prototype development for DPIIT-recognized early-stage startups.',
-    'Equity-free Grant',
-    2000000,
-    'Rolling (Quarterly Cycles)',
-    ARRAY['DeepTech, Hardware & Software Startups', 'Innovation'],
-    'https://www.startupindia.gov.in',
-    '{"operator": "AND", "children": [{"field": "entityType", "operator": "IN", "value": ["Private Limited", "LLP"], "description": "Must be incorporated as a Private Limited Company or LLP"}, {"field": "turnoverInr", "operator": "LTE", "value": 50000000, "description": "Annual turnover must not exceed ₹5.00 Cr"}, {"field": "yearsOfOperation", "operator": "LTE", "value": 2, "description": "Must be incorporated for 2 years or less"}]}'::jsonb,
-    '[{"docType": "PAN_CARD", "name": "Company PAN Card", "isMandatory": true, "description": "Corporate PAN"}, {"docType": "GSTIN_CERTIFICATE", "name": "GST Registration (REG-06)", "isMandatory": true, "description": "GSTIN certificate"}, {"docType": "PROJECT_PROPOSAL", "name": "Technical Proposal & Milestone Budget", "isMandatory": true, "description": "Detailed prototype workplan"}]'::jsonb,
-    ARRAY['startupindia.gov.in', 'Equity-free Grant', 'DPIIT', 'DeepTech']
-)
-ON CONFLICT (id) DO UPDATE SET
-    title = EXCLUDED.title,
-    description = EXCLUDED.description,
-    max_funding_amount = EXCLUDED.max_funding_amount,
-    eligibility_ast = EXCLUDED.eligibility_ast;

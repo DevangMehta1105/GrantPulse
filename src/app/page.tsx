@@ -9,8 +9,8 @@ export default function HomePage() {
   const { currentOrg, schemes, getOrgEvaluation } = useApp();
 
   // Find a scheme to display in the case file
-  const activeScheme = schemes[0];
-  const evalResult = getOrgEvaluation(activeScheme.id);
+  const activeScheme = schemes[0] || null;
+  const evalResult = activeScheme ? getOrgEvaluation(activeScheme.id) : null;
 
   return (
     <div>
@@ -35,30 +35,32 @@ export default function HomePage() {
             <Link href="/eligibility" className="btn-ink text-[14.5px] py-2.5 px-5">
               Start eligibility check
             </Link>
-            <a href="#casefile" className="link-quiet">
-              See a sample case file ↓
-            </a>
+            <Link href="/schemes" className="link-quiet">
+              Browse grant schemes →
+            </Link>
           </div>
 
           {/* ---------- SIGNATURE CASE FILE ---------- */}
-          <div className="casefile mt-16" id="casefile">
-            <div className="casefile-inner">
-              <div className="casefile-top">
-                <div>
-                  <div className="casefile-label">SAMPLE CASE FILE — READ ONLY</div>
-                  <div className="casefile-title">{currentOrg.name}</div>
+          {activeScheme && (
+            <div className="casefile mt-16" id="casefile">
+              <div className="casefile-inner">
+                <div className="casefile-top">
+                  <div>
+                    <div className="casefile-label">SAMPLE CASE FILE — READ ONLY</div>
+                    <div className="casefile-title">{currentOrg.name}</div>
+                  </div>
+                  <div className="casefile-label">
+                    Checked against: {activeScheme.title}
+                  </div>
                 </div>
-                <div className="casefile-label">
-                  Checked against: {activeScheme.title}
-                </div>
-              </div>
 
-              <div className="org-facts">
-                <div>Entity type: <b>{currentOrg.entityType}</b></div>
-                <div>Annual turnover: <b>{formatINR(currentOrg.turnoverInr)}</b></div>
-                <div>Udyam tier: <b>{currentOrg.udyamTier !== 'None' ? currentOrg.udyamTier : 'Unregistered'}</b></div>
-                <div>Location: <b>{currentOrg.state}, India</b></div>
-              </div>
+                <div className="org-facts">
+                  <div>Entity type: <b>{currentOrg.entityType}</b></div>
+                  <div>Annual turnover: <b>{formatINR(currentOrg.turnoverInr)}</b></div>
+                  <div>Udyam tier: <b>{currentOrg.udyamTier !== 'None' ? currentOrg.udyamTier : 'Unregistered'}</b></div>
+                  <div>Location: <b>{currentOrg.state}, India</b></div>
+                </div>
+
 
               <ul className="trace">
                 <li>
@@ -105,6 +107,19 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+          )}
+
+          {!activeScheme && (
+            <div className="casefile mt-16 p-8 text-center bg-[var(--paper-deep)] border border-dashed border-[var(--rule)] rounded">
+              <div className="font-mono text-xs text-[var(--stamp)] uppercase mb-2">Scheme Catalog Clean</div>
+              <p className="text-sm text-[var(--ink-soft)] max-w-md mx-auto mb-4">
+                All mock schemes have been wiped. Ingest real government grant schemes from myScheme, Startup India, or CSR Xchange via the Scheme Harvester.
+              </p>
+              <Link href="/ingestion" className="btn-ink text-xs py-2 px-4 inline-block">
+                Launch Scheme Harvester →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

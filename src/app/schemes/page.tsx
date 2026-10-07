@@ -262,6 +262,30 @@ export default function SchemesPage() {
           );
         })}
       </div>
+
+      {filteredSchemes.length === 0 && (
+        <div className="bg-[var(--paper-deep)] border border-[var(--rule)] rounded-lg p-12 text-center space-y-3 font-mono">
+          <div className="font-serif text-lg font-bold text-[var(--ink)]">
+            No Schemes Found in Catalog
+          </div>
+          <p className="text-xs text-[var(--ink-soft)] max-w-md mx-auto">
+            {schemes.length === 0
+              ? "The catalog currently has no schemes. Ingest verified schemes directly from government and CSR portals using Harvester."
+              : "No schemes match your active filter or search keywords."}
+          </p>
+          {schemes.length === 0 && (
+            <div>
+              <Link
+                href="/ingestion"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--ink)] text-[var(--paper)] text-xs font-mono font-bold rounded hover:bg-[#2D4A3E] transition-colors no-underline"
+              >
+                <span>Launch Scheme Harvester</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

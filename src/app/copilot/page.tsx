@@ -36,8 +36,8 @@ export default function CopilotPage() {
 
   const selectedScheme = schemes.find(s => s.id === selectedSchemeId) || schemes[0];
 
-  const [dossier, setDossier] = useState<GrantDossier>(() => 
-    synthesizeGrantDossier(currentOrg, selectedScheme, tone)
+  const [dossier, setDossier] = useState<GrantDossier | null>(() => 
+    selectedScheme ? synthesizeGrantDossier(currentOrg, selectedScheme, tone) : null
   );
 
   // Re-synthesize when scheme, org, or tone changes
@@ -45,9 +45,10 @@ export default function CopilotPage() {
     if (selectedScheme) {
       setDossier(synthesizeGrantDossier(currentOrg, selectedScheme, tone));
     }
-  }, [selectedSchemeId, currentOrg.id, tone]);
+  }, [selectedSchemeId, currentOrg?.id, tone]);
 
   const handleRegenerate = () => {
+    if (!selectedScheme) return;
     setIsGenerating(true);
     setTimeout(() => {
       setDossier(synthesizeGrantDossier(currentOrg, selectedScheme, tone));
@@ -64,6 +65,44 @@ export default function CopilotPage() {
   const handlePrintPdf = () => {
     window.print();
   };
+
+  if (!schemes || schemes.length === 0 || !selectedScheme || !dossier) {
+    return (
+      <div className="max-w-[1600px] mx-auto px-6 md:px-8 py-8 space-y-8 font-sans">
+        <div className="border-b border-[var(--rule)] pb-6">
+          <div className="font-mono text-[11px] tracking-widest uppercase text-[var(--stamp)] mb-1 flex items-center gap-2 font-semibold">
+            <span className="w-2 h-2 rounded-full bg-[var(--stamp)] animate-pulse"></span>
+            Pillar D · AI Proposal Drafting Co-Pilot
+          </div>
+          <h1 className="text-3xl font-serif font-bold text-[var(--ink)] tracking-tight">
+            Statutory Proposal &amp; Dossier Generator
+          </h1>
+          <p className="text-sm text-[var(--ink-soft)] mt-1 max-w-3xl">
+            Synthesize formal grant dossiers, GFR-compliant category budgets, Gantt-aligned milestone schedules, and Social ROI impact matrices.
+          </p>
+        </div>
+
+        <div className="bg-[var(--paper-deep)] border border-dashed border-[var(--rule)] rounded-lg p-16 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-[var(--paper)] border border-[var(--rule)] flex items-center justify-center mx-auto text-[var(--stamp)]">
+            <BotMessageSquare className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-[var(--ink)]">No Schemes Available for Proposal Generation</h3>
+          <p className="text-sm text-[var(--ink-soft)] max-w-md mx-auto">
+            All mock schemes have been removed. Use the Scheme Harvester or explore portals to ingest live grant schemes to generate proposals.
+          </p>
+          <div className="pt-2">
+            <a
+              href="/ingestion"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded transition-colors shadow-sm"
+            >
+              <span>LAUNCH SCHEME HARVESTER</span>
+              <ArrowRight className="w-4 h-4 text-[var(--stamp)]" />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 md:px-8 py-8 space-y-8 font-sans">

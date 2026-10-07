@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email,
             name: meta.name || email.split("@")[0],
             role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
-            orgId: meta.orgId || "org-vidyut-ev",
+            orgId: meta.orgId || `org-${session.user.id.slice(0, 8)}`,
             orgName: meta.orgName || "Enrolled Entity",
             entityType: (meta.entityType as EntityType) || "Private Limited",
             avatarInitials: initials
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email,
             name: meta.name || email.split("@")[0],
             role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
-            orgId: meta.orgId || "org-vidyut-ev",
+            orgId: meta.orgId || `org-${session.user.id.slice(0, 8)}`,
             orgName: meta.orgName || "Enrolled Entity",
             entityType: (meta.entityType as EntityType) || "Private Limited",
             avatarInitials: initials
@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.user.email || cleanEmail,
           name: meta.name || cleanEmail.split("@")[0].replace(/[._]/g, " "),
           role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
-          orgId: meta.orgId || "org-vidyut-ev",
+          orgId: meta.orgId || `org-${data.user.id.slice(0, 8)}`,
           orgName: meta.orgName || "Enrolled Organization",
           entityType: (meta.entityType as EntityType) || "Private Limited",
           avatarInitials: initials
@@ -175,13 +175,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isEvaluator = cleanEmail.includes("gov") || cleanEmail.includes("officer");
     const role = isEvaluator ? "evaluator" : isNgo ? "ngo_trustee" : "msme_founder";
     const entityType: EntityType = isNgo ? "Trust" : "Private Limited";
-    const orgId = isNgo ? "org-arogya-trust" : "org-vidyut-ev";
-    const orgName = isNgo ? "Arogya Rural Healthcare & Water Trust" : "Vidyut Micro Mobility Pvt Ltd";
-
+    const orgId = `org-${cleanEmail.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12)}`;
     const officerName = cleanEmail.split("@")[0]
       .split(/[._-]/)
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ");
+    const orgName = `${officerName}'s ${isNgo ? "Trust" : "Enterprises"}`;
 
     const initials = officerName.slice(0, 2).toUpperCase();
 

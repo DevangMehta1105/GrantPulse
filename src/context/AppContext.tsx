@@ -11,10 +11,6 @@ import {
   EvaluationResult,
   DocumentType
 } from "../lib/types";
-import { SEED_ORGANIZATIONS } from "../data/seed-organizations";
-import { SEED_SCHEMES } from "../data/seed-schemes";
-import { SEED_DOCUMENTS } from "../data/seed-documents";
-import { SEED_APPLICATIONS, SEED_EXPENSES } from "../data/seed-applications";
 import { evaluateSchemeEligibility } from "../lib/ast-engine/evaluator";
 import { createTransitionLog, canTransition } from "../lib/fsm/state-machine";
 import { validateDocumentOcr, calculateDocumentReadiness } from "../lib/ocr/validator";
@@ -59,19 +55,42 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+export const EMPTY_ORGANIZATION: Organization = {
+  id: "",
+  name: "No Organization Enrolled",
+  entityType: "Private Limited",
+  turnoverInr: 0,
+  incorporationDate: new Date().toISOString().split("T")[0],
+  yearsOfOperation: 0,
+  udyamTier: "None",
+  state: "National",
+  sector: "General",
+  complianceFlags: {
+    hasGstin: false,
+    hasPan: false,
+    hasUdyam: false,
+    has12A: false,
+    has80G: false,
+    hasNgoDarpan: false,
+    hasFcra: false,
+    hasCsr1: false
+  },
+  missionDescription: "Register your organization to start grant eligibility evaluations.",
+  contactEmail: "",
+  created_at: new Date().toISOString()
+};
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [organizations, setOrganizations] = useState<Organization[]>(SEED_ORGANIZATIONS);
-  const [currentOrgId, setCurrentOrgId] = useState<string>(SEED_ORGANIZATIONS[1].id); // Vidyut Micro Mobility
-  const [schemes, setSchemes] = useState<Scheme[]>(SEED_SCHEMES);
-  const [documents, setDocuments] = useState<UserDocument[]>(SEED_DOCUMENTS);
-  const [applications, setApplications] = useState<Application[]>(SEED_APPLICATIONS);
-  const [expenses, setExpenses] = useState<GrantExpense[]>(SEED_EXPENSES);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [currentOrgId, setCurrentOrgId] = useState<string>("");
+  const [schemes, setSchemes] = useState<Scheme[]>([]);
+  const [documents, setDocuments] = useState<UserDocument[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [expenses, setExpenses] = useState<GrantExpense[]>([]);
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(isSupabaseConfigured);
 
-  // Hydrate from Supabase on client mount if configured
+  // Hydrate from Supabase on client mount
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
     async function hydrateFromSupabase() {
       try {
         const [orgs, dbSchemes, docs, apps, exps] = await Promise.all([
@@ -82,21 +101,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           fetchGrantExpensesFromDb()
         ]);
 
-        if (orgs.length > 0) setOrganizations(orgs);
-        if (dbSchemes.length > 0) setSchemes(dbSchemes);
-        if (docs.length > 0) setDocuments(docs);
-        if (apps.length > 0) setApplications(apps);
-        if (exps.length > 0) setExpenses(exps);
-        setIsCloudConnected(true);
+        setOrganizations(orgs);
+        if (orgs.length > 0) {
+          setCurrentOrgId(prev => prev || orgs[0].id);
+        }
+        setSchemes(dbSchemes);
+        setDocuments(docs);
+        setApplications(apps);
+        setExpenses(exps);
+        if (isSupabaseConfigured) {
+          setIsCloudConnected(true);
+        }
       } catch (e) {
-        console.warn("Could not hydrate from Supabase, using seed defaults:", e);
+        console.warn("Could not hydrate from Supabase:", e);
       }
     }
 
     hydrateFromSupabase();
   }, []);
 
-  const currentOrg = organizations.find(o => o.id === currentOrgId) || organizations[0];
+  const currentOrg = organizations.find(o => o.id === currentOrgId) || organizations[0] || EMPTY_ORGANIZATION;
 
   const addOrganization = (org: Organization) => {
     setOrganizations(prev => [org, ...prev]);
@@ -151,6 +175,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getOrgEvaluation = (schemeId: string): EvaluationResult | null => {
+    if (!currentOrg || !currentOrg.id) return null;
     const scheme = schemes.find(s => s.id === schemeId);
     if (!scheme) return null;
     return evaluateSchemeEligibility(scheme.eligibilityAst, currentOrg);
@@ -158,7 +183,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getOrgDocumentReadiness = (schemeId: string) => {
     const scheme = schemes.find(s => s.id === schemeId);
-    if (!scheme) {
+    if (!scheme || !currentOrg || !currentOrg.id) {
       return { score: 0, mandatoryTotal: 0, mandatoryVerified: 0, missingMandatory: [], verifiedDocs: [] };
     }
     const orgDocs = documents.filter(d => d.orgId === currentOrg.id);

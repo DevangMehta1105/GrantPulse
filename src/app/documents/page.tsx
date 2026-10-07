@@ -451,6 +451,12 @@ export default function DocumentsPage() {
                   </div>
                 );
               })}
+
+              {schemes.length === 0 && (
+                <div className="p-8 border border-dashed border-[var(--rule)] text-center font-mono text-xs text-[var(--ink-soft)] rounded">
+                  No active schemes found in catalog. Ingest schemes from official portals to evaluate document readiness.
+                </div>
+              )}
             </div>
           </div>
 
