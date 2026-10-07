@@ -25,6 +25,7 @@ import {
   fetchUserDocumentsFromDb,
   fetchApplicationsFromDb,
   fetchGrantExpensesFromDb,
+  insertOrganizationToDb,
   insertSchemesToDb,
   insertUserDocumentToDb,
   saveApplicationToDb,
@@ -100,6 +101,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addOrganization = (org: Organization) => {
     setOrganizations(prev => [org, ...prev]);
     setCurrentOrgId(org.id);
+    if (isSupabaseConfigured) {
+      insertOrganizationToDb(org);
+    }
   };
 
   const addScheme = (newScheme: Scheme) => {

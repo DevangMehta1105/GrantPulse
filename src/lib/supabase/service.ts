@@ -44,6 +44,38 @@ export async function fetchOrganizationsFromDb(): Promise<Organization[]> {
   }
 }
 
+export async function insertOrganizationToDb(org: Organization): Promise<boolean> {
+  const supabase = getBrowserSupabase();
+  if (!supabase) return false;
+
+  try {
+    const { error } = await supabase.from("organizations").insert({
+      id: org.id,
+      name: org.name,
+      entity_type: org.entityType,
+      turnover_inr: org.turnoverInr,
+      incorporation_date: org.incorporationDate,
+      years_of_operation: org.yearsOfOperation,
+      udyam_tier: org.udyamTier,
+      state: org.state,
+      sector: org.sector,
+      compliance_flags: org.complianceFlags,
+      mission_description: org.missionDescription,
+      contact_email: org.contactEmail,
+      created_at: org.created_at || new Date().toISOString()
+    });
+
+    if (error) {
+      console.warn("Failed to insert organization to Supabase:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn("Error inserting organization to Supabase:", e);
+    return false;
+  }
+}
+
 // ==============================================================================
 // 2. SCHEMES SERVICE
 // ==============================================================================
