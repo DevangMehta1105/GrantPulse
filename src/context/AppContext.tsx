@@ -18,6 +18,18 @@ import { SEED_APPLICATIONS, SEED_EXPENSES } from "../data/seed-applications";
 import { evaluateSchemeEligibility } from "../lib/ast-engine/evaluator";
 import { createTransitionLog, canTransition } from "../lib/fsm/state-machine";
 import { validateDocumentOcr, calculateDocumentReadiness } from "../lib/ocr/validator";
+import { isSupabaseConfigured } from "../lib/supabase/client";
+import {
+  fetchOrganizationsFromDb,
+  fetchSchemesFromDb,
+  fetchUserDocumentsFromDb,
+  fetchApplicationsFromDb,
+  fetchGrantExpensesFromDb,
+  insertSchemesToDb,
+  insertUserDocumentToDb,
+  saveApplicationToDb,
+  insertGrantExpenseToDb
+} from "../lib/supabase/service";
 
 interface AppContextType {
   organizations: Organization[];
@@ -40,22 +52,55 @@ interface AppContextType {
   addExpense: (expense: Omit<GrantExpense, "id" | "timestamp">) => void;
   getOrgEvaluation: (schemeId: string) => EvaluationResult | null;
   getOrgDocumentReadiness: (schemeId: string) => ReturnType<typeof calculateDocumentReadiness>;
+  isCloudConnected: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [organizations] = useState<Organization[]>(SEED_ORGANIZATIONS);
+  const [organizations, setOrganizations] = useState<Organization[]>(SEED_ORGANIZATIONS);
   const [currentOrgId, setCurrentOrgId] = useState<string>(SEED_ORGANIZATIONS[1].id); // Vidyut Micro Mobility
   const [schemes, setSchemes] = useState<Scheme[]>(SEED_SCHEMES);
   const [documents, setDocuments] = useState<UserDocument[]>(SEED_DOCUMENTS);
   const [applications, setApplications] = useState<Application[]>(SEED_APPLICATIONS);
   const [expenses, setExpenses] = useState<GrantExpense[]>(SEED_EXPENSES);
+  const [isCloudConnected, setIsCloudConnected] = useState<boolean>(isSupabaseConfigured);
+
+  // Hydrate from Supabase on client mount if configured
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    async function hydrateFromSupabase() {
+      try {
+        const [orgs, dbSchemes, docs, apps, exps] = await Promise.all([
+          fetchOrganizationsFromDb(),
+          fetchSchemesFromDb(),
+          fetchUserDocumentsFromDb(),
+          fetchApplicationsFromDb(),
+          fetchGrantExpensesFromDb()
+        ]);
+
+        if (orgs.length > 0) setOrganizations(orgs);
+        if (dbSchemes.length > 0) setSchemes(dbSchemes);
+        if (docs.length > 0) setDocuments(docs);
+        if (apps.length > 0) setApplications(apps);
+        if (exps.length > 0) setExpenses(exps);
+        setIsCloudConnected(true);
+      } catch (e) {
+        console.warn("Could not hydrate from Supabase, using seed defaults:", e);
+      }
+    }
+
+    hydrateFromSupabase();
+  }, []);
 
   const currentOrg = organizations.find(o => o.id === currentOrgId) || organizations[0];
 
   const addScheme = (newScheme: Scheme) => {
     setSchemes(prev => [newScheme, ...prev]);
+    if (isSupabaseConfigured) {
+      insertSchemesToDb([newScheme]);
+    }
   };
 
   const batchAddSchemes = (newSchemes: Scheme[]) => {
@@ -64,6 +109,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const filteredNew = newSchemes.filter(s => !existingIds.has(s.id));
       return [...filteredNew, ...prev];
     });
+    if (isSupabaseConfigured) {
+      insertSchemesToDb(newSchemes);
+    }
   };
 
   const addDocument = (docType: DocumentType, fileName: string, rawOcrText: string = "") => {
@@ -87,6 +135,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     setDocuments(prev => [newDoc, ...prev]);
+    if (isSupabaseConfigured) {
+      insertUserDocumentToDb(newDoc);
+    }
   };
 
   const getOrgEvaluation = (schemeId: string): EvaluationResult | null => {
@@ -137,18 +188,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       prevHash
     );
 
+    let updatedAppObj: Application | null = null;
+
     setApplications(prev => prev.map(a => {
       if (a.id === appId) {
-        return {
+        updatedAppObj = {
           ...a,
           currentState: targetState,
           externalApplicationId: externalAppId || a.externalApplicationId,
           updated_at: new Date().toISOString(),
           stateHistory: [...a.stateHistory, newLog]
         };
+        return updatedAppObj;
       }
       return a;
     }));
+
+    if (isSupabaseConfigured && updatedAppObj) {
+      saveApplicationToDb(updatedAppObj);
+    }
 
     return { success: true };
   };
@@ -179,6 +237,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     setApplications(prev => [newApp, ...prev]);
+    if (isSupabaseConfigured) {
+      saveApplicationToDb(newApp);
+    }
+
     return newApp;
   };
 
@@ -189,6 +251,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       timestamp: new Date().toISOString()
     };
     setExpenses(prev => [newExp, ...prev]);
+    if (isSupabaseConfigured) {
+      insertGrantExpenseToDb(newExp);
+    }
   };
 
   return (
@@ -208,7 +273,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         expenses,
         addExpense,
         getOrgEvaluation,
-        getOrgDocumentReadiness
+        getOrgDocumentReadiness,
+        isCloudConnected
       }}
     >
       {children}
