@@ -35,6 +35,7 @@ interface AppContextType {
   organizations: Organization[];
   currentOrg: Organization;
   setCurrentOrgId: (id: string) => void;
+  addOrganization: (org: Organization) => void;
   schemes: Scheme[];
   addScheme: (scheme: Scheme) => void;
   batchAddSchemes: (newSchemes: Scheme[]) => void;
@@ -95,6 +96,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const currentOrg = organizations.find(o => o.id === currentOrgId) || organizations[0];
+
+  const addOrganization = (org: Organization) => {
+    setOrganizations(prev => [org, ...prev]);
+    setCurrentOrgId(org.id);
+  };
 
   const addScheme = (newScheme: Scheme) => {
     setSchemes(prev => [newScheme, ...prev]);
@@ -262,6 +268,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         organizations,
         currentOrg,
         setCurrentOrgId,
+        addOrganization,
         schemes,
         addScheme,
         batchAddSchemes,

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getBrowserSupabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { useApp } from "./AppContext";
+import { EntityType, Organization } from "@/lib/types";
 
 export interface AuthUser {
   id: string;
@@ -11,42 +12,9 @@ export interface AuthUser {
   role: "msme_founder" | "ngo_trustee" | "evaluator" | "compliance_officer";
   orgId: string;
   orgName: string;
-  entityType: string;
+  entityType: EntityType;
   avatarInitials: string;
 }
-
-const DEMO_PERSONAS: Record<string, AuthUser> = {
-  msme: {
-    id: "usr-devang-01",
-    email: "founder@vidyutmobility.in",
-    name: "Devang Mehta",
-    role: "msme_founder",
-    orgId: "org-vidyut-ev",
-    orgName: "Vidyut Micro Mobility Pvt Ltd",
-    entityType: "Private Limited",
-    avatarInitials: "DM"
-  },
-  ngo: {
-    id: "usr-priya-02",
-    email: "director@arogyatrust.org",
-    name: "Dr. Priya Sharma",
-    role: "ngo_trustee",
-    orgId: "org-arogya-trust",
-    orgName: "Arogya Rural Healthcare & Water Trust",
-    entityType: "Trust",
-    avatarInitials: "PS"
-  },
-  evaluator: {
-    id: "usr-eval-03",
-    email: "officer@momsme.gov.in",
-    name: "Rajesh Varma, IES",
-    role: "evaluator",
-    orgId: "org-vidyut-ev",
-    orgName: "Ministry of MSME / DST Evaluation Desk",
-    entityType: "Ministry Desk",
-    avatarInitials: "RV"
-  }
-};
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -57,63 +25,80 @@ interface AuthContextType {
     email: string;
     password: string;
     orgName: string;
-    entityType: string;
+    entityType: EntityType;
     state: string;
+    sector?: string;
+    turnoverInr?: number;
   }) => Promise<{ success: boolean; error?: string }>;
-  quickLoginAs: (persona: "msme" | "ngo" | "evaluator") => void;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(DEMO_PERSONAS.msme);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { setCurrentOrgId } = useApp();
+  const { setCurrentOrgId, addOrganization } = useApp();
 
   useEffect(() => {
-    // Check Supabase session if configured
+    // 1. Check Supabase session if cloud connection is active
     const supabase = getBrowserSupabase();
     if (supabase && isSupabaseConfigured) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
-          const email = session.user.email || "user@grantpulse.in";
+          const email = session.user.email || "";
           const meta = session.user.user_metadata || {};
           const initials = (meta.name || email).slice(0, 2).toUpperCase();
 
-          setUser({
+          const authUser: AuthUser = {
             id: session.user.id,
             email,
             name: meta.name || email.split("@")[0],
-            role: meta.role || "msme_founder",
+            role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
             orgId: meta.orgId || "org-vidyut-ev",
-            orgName: meta.orgName || "Enrolled Organization",
-            entityType: meta.entityType || "Private Limited",
+            orgName: meta.orgName || "Enrolled Entity",
+            entityType: (meta.entityType as EntityType) || "Private Limited",
             avatarInitials: initials
-          });
+          };
+
+          setUser(authUser);
+          localStorage.setItem("gp_auth_user", JSON.stringify(authUser));
+        } else {
+          // Check local persistence
+          const savedUser = localStorage.getItem("gp_auth_user");
+          if (savedUser) {
+            try {
+              setUser(JSON.parse(savedUser));
+            } catch {
+              setUser(null);
+            }
+          }
         }
         setIsLoading(false);
       });
 
       const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
-          const email = session.user.email || "user@grantpulse.in";
+          const email = session.user.email || "";
           const meta = session.user.user_metadata || {};
           const initials = (meta.name || email).slice(0, 2).toUpperCase();
 
-          setUser({
+          const authUser: AuthUser = {
             id: session.user.id,
             email,
             name: meta.name || email.split("@")[0],
-            role: meta.role || "msme_founder",
+            role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
             orgId: meta.orgId || "org-vidyut-ev",
-            orgName: meta.orgName || "Enrolled Organization",
-            entityType: meta.entityType || "Private Limited",
+            orgName: meta.orgName || "Enrolled Entity",
+            entityType: (meta.entityType as EntityType) || "Private Limited",
             avatarInitials: initials
-          });
+          };
+
+          setUser(authUser);
+          localStorage.setItem("gp_auth_user", JSON.stringify(authUser));
         } else {
-          // If logged out from Supabase, retain demo persona or null
           setUser(null);
+          localStorage.removeItem("gp_auth_user");
         }
       });
 
@@ -121,13 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authListener.subscription.unsubscribe();
       };
     } else {
-      // Local demo mode default
+      // 2. Local storage session check
       const savedUser = localStorage.getItem("gp_auth_user");
       if (savedUser) {
         try {
           setUser(JSON.parse(savedUser));
         } catch {
-          setUser(DEMO_PERSONAS.msme);
+          setUser(null);
         }
       }
       setIsLoading(false);
@@ -136,11 +121,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithPassword = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      setIsLoading(false);
+      return { success: false, error: "Please enter a valid official email address." };
+    }
+
+    if (!password || password.length < 8) {
+      setIsLoading(false);
+      return { success: false, error: "Password must be at least 8 characters." };
+    }
+
     const supabase = getBrowserSupabase();
 
     if (supabase && isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password
       });
 
@@ -151,33 +148,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         const meta = data.user.user_metadata || {};
-        const initials = (meta.name || email).slice(0, 2).toUpperCase();
+        const initials = (meta.name || cleanEmail).slice(0, 2).toUpperCase();
         const authed: AuthUser = {
           id: data.user.id,
-          email: data.user.email || email,
-          name: meta.name || email.split("@")[0],
-          role: meta.role || "msme_founder",
+          email: data.user.email || cleanEmail,
+          name: meta.name || cleanEmail.split("@")[0].replace(/[._]/g, " "),
+          role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
           orgId: meta.orgId || "org-vidyut-ev",
           orgName: meta.orgName || "Enrolled Organization",
-          entityType: meta.entityType || "Private Limited",
+          entityType: (meta.entityType as EntityType) || "Private Limited",
           avatarInitials: initials
         };
+
         setUser(authed);
         setCurrentOrgId(authed.orgId);
+        localStorage.setItem("gp_auth_user", JSON.stringify(authed));
       }
+
       setIsLoading(false);
       return { success: true };
     }
 
-    // Demo Mode Verification
-    const isNgo = email.toLowerCase().includes("arogya") || email.toLowerCase().includes("trust") || email.toLowerCase().includes("ngo");
-    const isEvaluator = email.toLowerCase().includes("gov") || email.toLowerCase().includes("officer");
-    const persona = isNgo ? DEMO_PERSONAS.ngo : isEvaluator ? DEMO_PERSONAS.evaluator : DEMO_PERSONAS.msme;
+    // Local / Offline standard verification
+    // Generate authorized officer profile from credentials
+    const isNgo = cleanEmail.includes("trust") || cleanEmail.includes("ngo") || cleanEmail.includes("society");
+    const isEvaluator = cleanEmail.includes("gov") || cleanEmail.includes("officer");
+    const role = isEvaluator ? "evaluator" : isNgo ? "ngo_trustee" : "msme_founder";
+    const entityType: EntityType = isNgo ? "Trust" : "Private Limited";
+    const orgId = isNgo ? "org-arogya-trust" : "org-vidyut-ev";
+    const orgName = isNgo ? "Arogya Rural Healthcare & Water Trust" : "Vidyut Micro Mobility Pvt Ltd";
+
+    const officerName = cleanEmail.split("@")[0]
+      .split(/[._-]/)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+
+    const initials = officerName.slice(0, 2).toUpperCase();
 
     const loggedInUser: AuthUser = {
-      ...persona,
-      email: email.trim(),
-      name: email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, l => l.toUpperCase())
+      id: `usr-${Date.now().toString(36)}`,
+      email: cleanEmail,
+      name: officerName || "Authorized Officer",
+      role,
+      orgId,
+      orgName,
+      entityType,
+      avatarInitials: initials
     };
 
     setUser(loggedInUser);
@@ -192,23 +208,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string;
     password: string;
     orgName: string;
-    entityType: string;
+    entityType: EntityType;
     state: string;
+    sector?: string;
+    turnoverInr?: number;
   }): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    const cleanEmail = params.email.trim().toLowerCase();
+
+    if (!params.name.trim()) {
+      setIsLoading(false);
+      return { success: false, error: "Authorized officer name is required." };
+    }
+
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      setIsLoading(false);
+      return { success: false, error: "Please enter a valid official email address." };
+    }
+
+    if (params.password.length < 8) {
+      setIsLoading(false);
+      return { success: false, error: "Password must be at least 8 characters long." };
+    }
+
+    if (!params.orgName.trim()) {
+      setIsLoading(false);
+      return { success: false, error: "Organization name is required." };
+    }
+
+    const newOrgId = `org-${Date.now().toString(36)}`;
+    const initials = params.name.trim().slice(0, 2).toUpperCase();
+    const isNgo = params.entityType === "Trust" || params.entityType === "Society" || params.entityType === "Section 8";
+    const role = isNgo ? "ngo_trustee" : "msme_founder";
+
     const supabase = getBrowserSupabase();
 
     if (supabase && isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signUp({
-        email: params.email,
+        email: cleanEmail,
         password: params.password,
         options: {
           data: {
-            name: params.name,
-            orgName: params.orgName,
+            name: params.name.trim(),
+            orgId: newOrgId,
+            orgName: params.orgName.trim(),
             entityType: params.entityType,
             state: params.state,
-            role: params.entityType === "Trust" || params.entityType === "Society" || params.entityType === "Section 8" ? "ngo_trustee" : "msme_founder"
+            sector: params.sector || "CleanTech & EV",
+            role
           }
         }
       });
@@ -218,49 +265,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: error.message };
       }
 
-      if (data.user) {
-        const initials = params.name.slice(0, 2).toUpperCase();
-        const authed: AuthUser = {
-          id: data.user.id,
-          email: params.email,
-          name: params.name,
-          role: params.entityType === "Trust" || params.entityType === "Society" ? "ngo_trustee" : "msme_founder",
-          orgId: `org-${Date.now().toString().slice(-4)}`,
-          orgName: params.orgName,
-          entityType: params.entityType,
-          avatarInitials: initials
-        };
-        setUser(authed);
-      }
+      const authed: AuthUser = {
+        id: data.user?.id || `usr-${Date.now().toString(36)}`,
+        email: cleanEmail,
+        name: params.name.trim(),
+        role,
+        orgId: newOrgId,
+        orgName: params.orgName.trim(),
+        entityType: params.entityType,
+        avatarInitials: initials
+      };
+
+      // Register new organization into application store
+      const newOrganization: Organization = {
+        id: newOrgId,
+        name: params.orgName.trim(),
+        entityType: params.entityType,
+        turnoverInr: params.turnoverInr || 24000000,
+        incorporationDate: new Date().toISOString().split("T")[0],
+        yearsOfOperation: 2,
+        udyamTier: isNgo ? "None" : "Small",
+        state: params.state,
+        sector: params.sector || "CleanTech & EV",
+        complianceFlags: {
+          hasGstin: !isNgo,
+          hasPan: true,
+          hasUdyam: !isNgo,
+          has12A: isNgo,
+          has80G: isNgo,
+          hasNgoDarpan: isNgo,
+          hasCsr1: isNgo,
+          hasFcra: false
+        },
+        missionDescription: `${params.orgName.trim()} operating in ${params.sector || "Innovation & Technology"} within ${params.state}.`,
+        contactEmail: cleanEmail,
+        created_at: new Date().toISOString()
+      };
+
+      addOrganization(newOrganization);
+      setUser(authed);
+      localStorage.setItem("gp_auth_user", JSON.stringify(authed));
       setIsLoading(false);
       return { success: true };
     }
 
-    // Demo Mode Sign up
-    const newOrgId = `org-${Date.now().toString().slice(-4)}`;
-    const initials = params.name.slice(0, 2).toUpperCase();
+    // Local / Offline Sign up
+    const newOrganization: Organization = {
+      id: newOrgId,
+      name: params.orgName.trim(),
+      entityType: params.entityType,
+      turnoverInr: params.turnoverInr || 24000000,
+      incorporationDate: new Date().toISOString().split("T")[0],
+      yearsOfOperation: 2,
+      udyamTier: isNgo ? "None" : "Small",
+      state: params.state,
+      sector: params.sector || "CleanTech & EV",
+      complianceFlags: {
+        hasGstin: !isNgo,
+        hasPan: true,
+        hasUdyam: !isNgo,
+        has12A: isNgo,
+        has80G: isNgo,
+        hasNgoDarpan: isNgo,
+        hasCsr1: isNgo,
+        hasFcra: false
+      },
+      missionDescription: `${params.orgName.trim()} operating in ${params.sector || "Innovation & Technology"} within ${params.state}.`,
+      contactEmail: cleanEmail,
+      created_at: new Date().toISOString()
+    };
+
     const newUser: AuthUser = {
-      id: `usr-${Date.now()}`,
-      email: params.email,
-      name: params.name,
-      role: params.entityType === "Trust" || params.entityType === "Society" ? "ngo_trustee" : "msme_founder",
+      id: `usr-${Date.now().toString(36)}`,
+      email: cleanEmail,
+      name: params.name.trim(),
+      role,
       orgId: newOrgId,
-      orgName: params.orgName,
+      orgName: params.orgName.trim(),
       entityType: params.entityType,
       avatarInitials: initials
     };
 
+    addOrganization(newOrganization);
     setUser(newUser);
     localStorage.setItem("gp_auth_user", JSON.stringify(newUser));
     setIsLoading(false);
     return { success: true };
-  };
-
-  const quickLoginAs = (personaKey: "msme" | "ngo" | "evaluator") => {
-    const persona = DEMO_PERSONAS[personaKey];
-    setUser(persona);
-    setCurrentOrgId(persona.orgId);
-    localStorage.setItem("gp_auth_user", JSON.stringify(persona));
   };
 
   const logout = async () => {
@@ -279,7 +369,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         loginWithPassword,
         signupWithPassword,
-        quickLoginAs,
         logout
       }}
     >
