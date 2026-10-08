@@ -259,7 +259,7 @@ export default function DocumentsPage() {
             <div>
               <div className="flex items-center justify-between mb-1 font-mono text-[11px]">
                 <label className="font-semibold text-[var(--ink)]">
-                  3. OCR TEXT STREAM / PAYLOAD:
+                  3. VERIFIED OCR TEXT STREAM / METADATA PAYLOAD:
                 </label>
                 <button
                   type="button"
@@ -272,16 +272,18 @@ export default function DocumentsPage() {
                         .replace(/GREENROOTS AGRO FOUNDATION/g, currentOrg.name.toUpperCase())
                     );
                   }}
-                  className="text-[10px] text-[var(--stamp)] hover:underline flex items-center gap-1 font-medium"
+                  className="text-[10px] text-[var(--ink-soft)] hover:text-[var(--stamp)] hover:underline flex items-center gap-1 font-medium transition-colors"
+                  title="Load standard regulatory template format"
                 >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Insert Org Preset</span>
+                  <Sparkles className="w-3 h-3 text-[var(--stamp)]" />
+                  <span>Load Standard Template</span>
                 </button>
               </div>
 
               <textarea
                 value={ocrTextInput}
                 onChange={(e) => setOcrTextInput(e.target.value)}
+                placeholder="Upload certificate above to automatically extract text stream, or paste government-issued certificate details..."
                 rows={5}
                 className="w-full bg-[var(--paper)] border border-[var(--rule)] p-3 text-[var(--ink)] font-mono text-[11px] leading-relaxed rounded focus:outline-none focus:ring-1 focus:ring-[var(--stamp)] shadow-inner"
                 required

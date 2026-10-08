@@ -58,17 +58,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
       <footer className="border-t border-[var(--rule)] py-9 text-[13px] text-[var(--ink-soft)] bg-[var(--paper)]">
         <div className="wrap flex justify-between flex-wrap gap-3">
-          <span>GrantPulse — built for Indian MSMEs &amp; NGOs</span>
-          <span className="space-x-4">
-            <a href="/login" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Security Clearance</a>
+          <span>GrantPulse — Grant acquisition &amp; compliance OS for Indian MSMEs &amp; NGOs</span>
+          <span className="space-x-3 text-xs">
+            <a href="/schemes" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Discover Grants</a>
             <span>·</span>
-            <a href="/eligibility" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">How matching works</a>
+            <a href="/pipeline" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Application Pipeline</a>
             <span>·</span>
-            <a href="/schemes" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Schemes Catalog</a>
+            <a href="/copilot" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Proposal Co-Pilot</a>
             <span>·</span>
-            <a href="/pipeline" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Pipeline Tracker</a>
+            <a href="/eligibility" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">Eligibility Explainer</a>
             <span>·</span>
             <a href="/compliance" className="text-[var(--ink-soft)] hover:text-[var(--ink)] underline">GFR 12-A Ledger</a>
+            <span>·</span>
+            <a href="/ingestion" className="text-[#8b8579] hover:text-[var(--ink)] font-mono text-[11px] underline">Admin Harvester</a>
           </span>
         </div>
       </footer>

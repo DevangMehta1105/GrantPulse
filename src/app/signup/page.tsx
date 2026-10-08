@@ -44,9 +44,20 @@ export default function SignupPage() {
   const [entityType, setEntityType] = useState<EntityType>("Private Limited");
   const [state, setState] = useState("Karnataka");
   const [sector, setSector] = useState("CleanTech & EV Mobility");
+  const [turnoverOption, setTurnoverOption] = useState<string>("2.5cr_10cr");
+  const [udyamTier, setUdyamTier] = useState<"Micro" | "Small" | "Medium" | "None">("Small");
+  
+  // Compliance checkboxes
+  const [has12A80G, setHas12A80G] = useState(true);
+  const [hasNgoDarpan, setHasNgoDarpan] = useState(true);
+  const [hasCsr1, setHasCsr1] = useState(true);
+  const [hasUdyam, setHasUdyam] = useState(true);
+  const [hasGstin, setHasGstin] = useState(true);
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isNgo = entityType === "Trust" || entityType === "Society" || entityType === "Section 8";
 
   // Password strength logic
   const getPasswordStrength = () => {
@@ -97,6 +108,14 @@ export default function SignupPage() {
       return;
     }
 
+    // Determine numeric turnover from bracket
+    let turnoverInr = 48000000;
+    if (turnoverOption === "under_50l") turnoverInr = 3500000;
+    else if (turnoverOption === "50l_2.5cr") turnoverInr = 15000000;
+    else if (turnoverOption === "2.5cr_10cr") turnoverInr = 48000000;
+    else if (turnoverOption === "10cr_50cr") turnoverInr = 240000000;
+    else if (turnoverOption === "above_50cr") turnoverInr = 650000000;
+
     setIsSubmitting(true);
 
     const res = await signupWithPassword({
@@ -106,13 +125,26 @@ export default function SignupPage() {
       orgName: orgName.trim(),
       entityType,
       state,
-      sector
+      sector,
+      turnoverInr,
+      udyamTier: isNgo ? "None" : (hasUdyam ? udyamTier : "None"),
+      complianceFlags: {
+        hasGstin: !isNgo && hasGstin,
+        hasPan: true,
+        hasUdyam: !isNgo && hasUdyam,
+        has12A: isNgo && has12A80G,
+        has80G: isNgo && has12A80G,
+        hasNgoDarpan: isNgo && hasNgoDarpan,
+        hasCsr1: isNgo && hasCsr1,
+        hasFcra: false
+      }
     });
 
     setIsSubmitting(false);
 
     if (res.success) {
-      router.push("/pipeline");
+      // Guide user straight to discovering their matches!
+      router.push("/schemes");
     } else {
       setErrorMsg(res.error || "Enrollment failed. Please verify submitted details.");
     }
@@ -372,7 +404,7 @@ export default function SignupPage() {
               </div>
 
               {/* Primary Sector */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-[13px] text-[#5C5648] mb-1.5 font-medium">
                   Primary grant focus sector
                 </label>
@@ -387,6 +419,97 @@ export default function SignupPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Annual Turnover Bracket */}
+              <div className="mb-4">
+                <label className="block text-[13px] text-[#5C5648] mb-1.5 font-medium">
+                  Annual turnover bracket (FY 2023-24)
+                </label>
+                <select
+                  value={turnoverOption}
+                  onChange={(e) => setTurnoverOption(e.target.value)}
+                  className="w-full h-10 px-3 py-2 text-[14px] bg-white border border-[#C9C0AC] rounded-md text-[#22271F] focus:outline-none focus:border-[#22271F] focus:ring-1 focus:ring-[#22271F] cursor-pointer"
+                >
+                  <option value="under_50l">Under ₹50 Lakhs (Early stage / Micro)</option>
+                  <option value="50l_2.5cr">₹50 Lakhs to ₹2.5 Crores</option>
+                  <option value="2.5cr_10cr">₹2.5 Crores to ₹10 Crores</option>
+                  <option value="10cr_50cr">₹10 Crores to ₹50 Crores</option>
+                  <option value="above_50cr">Above ₹50 Crores (Large Corporate)</option>
+                </select>
+              </div>
+
+              {/* Regulatory Accreditations (Checkboxes) */}
+              <div className="mb-6 p-3.5 bg-[#EAE4D5] rounded-lg border border-[#C9C0AC]/70">
+                <div className="text-[12px] font-mono uppercase tracking-wider text-[#5C5648] font-bold mb-2">
+                  Active registrations &amp; compliance
+                </div>
+
+                {isNgo ? (
+                  <div className="space-y-2 text-[13px] text-[#22271F]">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={has12A80G}
+                        onChange={(e) => setHas12A80G(e.target.checked)}
+                        className="rounded border-[#C9C0AC] text-[#22271F] focus:ring-0"
+                      />
+                      <span>12A / 80G Tax Exemption (Form 10AC)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasNgoDarpan}
+                        onChange={(e) => setHasNgoDarpan(e.target.checked)}
+                        className="rounded border-[#C9C0AC] text-[#22271F] focus:ring-0"
+                      />
+                      <span>NITI Aayog NGO-Darpan Unique ID</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasCsr1}
+                        onChange={(e) => setHasCsr1(e.target.checked)}
+                        className="rounded border-[#C9C0AC] text-[#22271F] focus:ring-0"
+                      />
+                      <span>MCA CSR-1 Registration for Corporate Grants</span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-[13px] text-[#22271F]">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={hasUdyam}
+                          onChange={(e) => setHasUdyam(e.target.checked)}
+                          className="rounded border-[#C9C0AC] text-[#22271F] focus:ring-0"
+                        />
+                        <span>Udyam MSME Registration</span>
+                      </label>
+                      {hasUdyam && (
+                        <select
+                          value={udyamTier}
+                          onChange={(e) => setUdyamTier(e.target.value as any)}
+                          className="text-xs px-2 py-1 bg-white border border-[#C9C0AC] rounded text-[#22271F]"
+                        >
+                          <option value="Micro">Micro</option>
+                          <option value="Small">Small</option>
+                          <option value="Medium">Medium</option>
+                        </select>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasGstin}
+                        onChange={(e) => setHasGstin(e.target.checked)}
+                        className="rounded border-[#C9C0AC] text-[#22271F] focus:ring-0"
+                      />
+                      <span>GSTIN Active Registration</span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Actions row */}

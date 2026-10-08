@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { 
   DndContext, 
   DragOverlay, 
@@ -17,7 +18,7 @@ import { Application, ApplicationState, Scheme } from "@/lib/types";
 import { useApp } from "@/context/AppContext";
 import { formatINR, formatDate } from "@/lib/utils";
 import { verifyAuditChainIntegrity } from "@/lib/fsm/state-machine";
-import { Hash, X, ChevronRight, GripVertical, ShieldCheck, AlertCircle } from "lucide-react";
+import { Hash, X, ChevronRight, GripVertical, ShieldCheck, AlertCircle, Sparkles, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const COLUMNS: { state: ApplicationState; label: string; desc: string }[] = [
@@ -142,8 +143,17 @@ function DraggableCard({
         </div>
       )}
 
+      {/* Direct Proposal Drafting Link */}
+      <Link
+        href={`/copilot?schemeId=${app.schemeId}&appId=${app.id}`}
+        className="w-full py-1.5 px-2 bg-[#E4DCCB] hover:bg-[#D8CEB8] text-[var(--ink)] font-mono text-[11px] font-bold rounded flex items-center justify-center gap-1.5 transition-colors no-underline border border-[var(--rule)]/60 my-1"
+      >
+        <Sparkles className="w-3.5 h-3.5 text-[var(--stamp)]" />
+        <span>Draft Proposal with Co-Pilot →</span>
+      </Link>
+
       {/* Action Footer */}
-      <div className="pt-2.5 border-t border-[var(--rule)] flex items-center justify-between gap-2 font-mono">
+      <div className="pt-2 border-t border-[var(--rule)] flex items-center justify-between gap-2 font-mono">
         <button
           type="button"
           onClick={(e) => {
@@ -407,7 +417,7 @@ export function KanbanBoard() {
           ) : null}
         </DragOverlay>
 
-        {/* SHA-256 Audit Modal */}
+        {/* Official Audit Provenance Certificate Modal */}
         {selectedAppForAudit && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
             <div className="bg-[var(--paper)] border border-[var(--ink)] max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl rounded overflow-hidden text-xs">
@@ -416,9 +426,11 @@ export function KanbanBoard() {
                   <span className="seal">GP</span>
                   <div>
                     <h3 className="font-bold serif text-sm text-[var(--ink)]">
-                      SHA-256 Cryptographic Audit Provenance
+                      Official Application Audit &amp; Provenance Certificate
                     </h3>
-                    <div className="font-mono text-[10px] text-[var(--ink-soft)]">{selectedAppForAudit.id}</div>
+                    <div className="font-mono text-[10px] text-[var(--ink-soft)]">
+                      Application ID: {selectedAppForAudit.id} · Organization: {currentOrg.name}
+                    </div>
                   </div>
                 </div>
                 <button 
@@ -430,36 +442,53 @@ export function KanbanBoard() {
               </div>
 
               <div className={cn(
-                "p-3 border-b font-mono text-[11px] flex items-center gap-2",
+                "p-3.5 border-b font-sans text-xs flex items-center gap-2.5",
                 auditVerification?.isValid
-                  ? "bg-[var(--verified-bg)] border-[var(--rule)] text-[var(--verified)]"
+                  ? "bg-[var(--verified-bg)] border-[var(--rule)] text-[var(--verified)] font-medium"
                   : auditVerification === null
-                  ? "bg-[var(--paper-deep)] border-[var(--rule)] text-[var(--ink-soft)]"
+                  ? "bg-[var(--paper-deep)] border-[var(--rule)] text-[var(--ink-soft)] font-mono"
                   : "bg-red-50 border-red-200 text-red-700"
               )}>
-                <ShieldCheck className="w-4 h-4" />
-                <span>
-                  {auditVerification === null
-                    ? "Verifying SHA-256 chain integrity..."
-                    : auditVerification.isValid
-                    ? `✓ Hash chain verified: ${selectedAppForAudit.stateHistory.length} transitions cryptographically linked. No tampering detected.`
-                    : `⚠ Chain integrity failure: ${auditVerification.error}`}
-                </span>
+                <ShieldCheck className="w-5 h-5 flex-shrink-0" />
+                <div>
+                  <div className="font-bold">
+                    {auditVerification === null
+                      ? "Verifying audit chain integrity..."
+                      : auditVerification.isValid
+                      ? "Cryptographic Verification: 100% Intact & Untampered"
+                      : "Integrity Warning"}
+                  </div>
+                  <div className="text-[11px] opacity-90">
+                    {auditVerification?.isValid
+                      ? `All ${selectedAppForAudit.stateHistory.length} lifecycle transitions are cryptographically sealed. Zero post-facto alteration detected.`
+                      : auditVerification?.error}
+                  </div>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              <div className="flex-1 overflow-y-auto p-5 space-y-3 font-sans">
+                <div className="text-[10px] font-mono uppercase text-[var(--ink-soft)] font-bold mb-1">
+                  Chronological State Transition Ledger:
+                </div>
+
                 {selectedAppForAudit.stateHistory.map((entry, idx) => (
-                  <div key={idx} className="bg-[var(--paper-deep)] border border-[var(--rule)] rounded p-3.5 space-y-1.5 font-mono">
-                    <div className="flex items-center justify-between text-[11px]">
+                  <div key={idx} className="bg-[var(--paper-deep)] border border-[var(--rule)] rounded p-3.5 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-mono">
                       <span className="text-[var(--ink)] font-bold">
-                        #{idx + 1} {entry.fromState} → {entry.toState}
+                        Step #{idx + 1}: {entry.fromState} → {entry.toState}
                       </span>
                       <span className="text-[var(--ink-soft)]">{formatDate(entry.timestamp)}</span>
                     </div>
-                    <p className="text-[12px] text-[var(--ink-soft)] font-sans">{entry.actionNote}</p>
-                    <div className="text-[10px] text-[var(--ink-soft)] bg-black/5 p-1.5 rounded truncate">
-                      <span className="text-[var(--stamp)] font-bold">SHA-256:</span> {entry.hash}
-                    </div>
+                    <p className="text-[12px] text-[var(--ink-soft)]">{entry.actionNote}</p>
+                    
+                    <details className="pt-1">
+                      <summary className="font-mono text-[10px] text-[var(--ink-soft)] cursor-pointer hover:text-[var(--ink)] select-none">
+                        View SHA-256 cryptographic seal
+                      </summary>
+                      <div className="mt-1 font-mono text-[10px] text-[var(--ink-soft)] bg-black/5 p-1.5 rounded break-all select-all">
+                        <span className="text-[var(--stamp)] font-bold">Hash:</span> {entry.hash}
+                      </div>
+                    </details>
                   </div>
                 ))}
               </div>

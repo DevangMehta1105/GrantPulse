@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getBrowserSupabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { useApp } from "./AppContext";
-import { EntityType, Organization } from "@/lib/types";
+import { EntityType, Organization, UdyamTier, ComplianceFlags } from "@/lib/types";
 
 export interface AuthUser {
   id: string;
@@ -29,6 +29,8 @@ interface AuthContextType {
     state: string;
     sector?: string;
     turnoverInr?: number;
+    udyamTier?: UdyamTier;
+    complianceFlags?: Partial<ComplianceFlags>;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
@@ -205,6 +207,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     state: string;
     sector?: string;
     turnoverInr?: number;
+    udyamTier?: UdyamTier;
+    complianceFlags?: Partial<ComplianceFlags>;
   }): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     const cleanEmail = params.email.trim().toLowerCase();
@@ -270,26 +274,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       // Register new organization into application store
+      const defaultCompliance: ComplianceFlags = {
+        hasGstin: !isNgo,
+        hasPan: true,
+        hasUdyam: !isNgo,
+        has12A: isNgo,
+        has80G: isNgo,
+        hasNgoDarpan: isNgo,
+        hasCsr1: isNgo,
+        hasFcra: false,
+        ...params.complianceFlags
+      };
+
       const newOrganization: Organization = {
         id: newOrgId,
         name: params.orgName.trim(),
         entityType: params.entityType,
-        turnoverInr: params.turnoverInr || 24000000,
+        turnoverInr: params.turnoverInr !== undefined ? params.turnoverInr : (isNgo ? 8500000 : 48000000),
         incorporationDate: new Date().toISOString().split("T")[0],
-        yearsOfOperation: 2,
-        udyamTier: isNgo ? "None" : "Small",
+        yearsOfOperation: 3,
+        udyamTier: params.udyamTier || (isNgo ? "None" : "Small"),
         state: params.state,
         sector: params.sector || "CleanTech & EV",
-        complianceFlags: {
-          hasGstin: !isNgo,
-          hasPan: true,
-          hasUdyam: !isNgo,
-          has12A: isNgo,
-          has80G: isNgo,
-          hasNgoDarpan: isNgo,
-          hasCsr1: isNgo,
-          hasFcra: false
-        },
+        complianceFlags: defaultCompliance,
         missionDescription: `${params.orgName.trim()} operating in ${params.sector || "Innovation & Technology"} within ${params.state}.`,
         contactEmail: cleanEmail,
         created_at: new Date().toISOString()
@@ -303,26 +310,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Local / Offline Sign up
+    const defaultComplianceLocal: ComplianceFlags = {
+      hasGstin: !isNgo,
+      hasPan: true,
+      hasUdyam: !isNgo,
+      has12A: isNgo,
+      has80G: isNgo,
+      hasNgoDarpan: isNgo,
+      hasCsr1: isNgo,
+      hasFcra: false,
+      ...params.complianceFlags
+    };
+
     const newOrganization: Organization = {
       id: newOrgId,
       name: params.orgName.trim(),
       entityType: params.entityType,
-      turnoverInr: params.turnoverInr || 24000000,
+      turnoverInr: params.turnoverInr !== undefined ? params.turnoverInr : (isNgo ? 8500000 : 48000000),
       incorporationDate: new Date().toISOString().split("T")[0],
-      yearsOfOperation: 2,
-      udyamTier: isNgo ? "None" : "Small",
+      yearsOfOperation: 3,
+      udyamTier: params.udyamTier || (isNgo ? "None" : "Small"),
       state: params.state,
       sector: params.sector || "CleanTech & EV",
-      complianceFlags: {
-        hasGstin: !isNgo,
-        hasPan: true,
-        hasUdyam: !isNgo,
-        has12A: isNgo,
-        has80G: isNgo,
-        hasNgoDarpan: isNgo,
-        hasCsr1: isNgo,
-        hasFcra: false
-      },
+      complianceFlags: defaultComplianceLocal,
       missionDescription: `${params.orgName.trim()} operating in ${params.sector || "Innovation & Technology"} within ${params.state}.`,
       contactEmail: cleanEmail,
       created_at: new Date().toISOString()

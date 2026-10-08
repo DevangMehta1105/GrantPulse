@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { formatINR, formatDate } from "@/lib/utils";
 import { 
@@ -25,14 +26,30 @@ import { cn } from "@/lib/utils";
 import { ProposalTone, GrantDossier } from "@/lib/copilot/types";
 import { synthesizeGrantDossier } from "@/lib/copilot/synthesizer";
 
-export default function CopilotPage() {
+function CopilotInner() {
+  const searchParams = useSearchParams();
+  const querySchemeId = searchParams.get("schemeId");
   const { schemes, currentOrg } = useApp();
-  const [selectedSchemeId, setSelectedSchemeId] = useState<string>(schemes[0]?.id || "");
+
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string>(() => {
+    if (querySchemeId && schemes.some(s => s.id === querySchemeId)) {
+      return querySchemeId;
+    }
+    return schemes[0]?.id || "";
+  });
+
   const [tone, setTone] = useState<ProposalTone>("formal_gov");
   const [activeTab, setActiveTab] = useState<"summary" | "milestones" | "budget" | "sroi" | "annexure">("summary");
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+
+  // Sync when query param changes
+  useEffect(() => {
+    if (querySchemeId && schemes.some(s => s.id === querySchemeId)) {
+      setSelectedSchemeId(querySchemeId);
+    }
+  }, [querySchemeId, schemes]);
 
   const selectedScheme = schemes.find(s => s.id === selectedSchemeId) || schemes[0];
 
@@ -46,6 +63,54 @@ export default function CopilotPage() {
       setDossier(synthesizeGrantDossier(currentOrg, selectedScheme, tone));
     }
   }, [selectedSchemeId, currentOrg?.id, tone]);
+
+  const handleDownloadDossier = () => {
+    if (!dossier || !selectedScheme) return;
+    const textContent = `GRANT SUBMISSION DOSSIER
+==================================================
+PROGRAM: ${selectedScheme.title}
+FUNDER: ${selectedScheme.ministryOrFunder}
+APPLICANT: ${currentOrg.name} (${currentOrg.entityType})
+SANCTION MAXIMUM: ${formatINR(selectedScheme.maxFundingAmount)}
+DATE: ${new Date().toLocaleDateString("en-IN")}
+==================================================
+
+SECTION I: EXECUTIVE SUMMARY
+--------------------------------------------------
+${dossier.executiveSummary}
+
+PROBLEM STATEMENT:
+${dossier.problemStatement}
+
+PROPOSED SOLUTION & METHODOLOGY:
+${dossier.proposedSolution}
+
+SECTION II: 3-PHASE EXECUTION MILESTONES
+--------------------------------------------------
+${dossier.milestones.map(m => `[${m.quarter}] ${m.phase}: ${m.title} (Budget: ${formatINR(m.budgetAllocationInr)})\nDeliverables:\n${m.deliverables.map(d => ` - ${d}`).join('\n')}\nAcceptance Criteria: ${m.acceptanceCriteria}`).join('\n\n')}
+
+SECTION III: GFR 12-A CATEGORY BUDGET
+--------------------------------------------------
+Total Project Cost: ${formatINR(dossier.totalBudgetInr)}
+Grant Subsidy: ${formatINR(dossier.requestedAmountInr)}
+
+Category Breakdown:
+${dossier.budgetTable.map(c => ` - ${c.category} (${c.subItem}): ${formatINR(c.amountInr)} (${(c.percentage * 100).toFixed(0)}%) [GFR Code: ${c.gfrCode}]`).join('\n')}
+
+SECTION IV: SOCIAL ROI & IMPACT
+--------------------------------------------------
+SROI Ratio: ${dossier.sroiRatio}x
+${dossier.sroiMetrics.map(e => `[${e.metric}] Baseline: ${e.baseline} -> Target (24Mo): ${e.target24Months} (Impact: ${formatINR(e.monetizedImpactInr)})`).join('\n')}
+`.trim();
+
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentOrg.name.replace(/\s+/g, "_")}_${selectedScheme.title.slice(0, 20).replace(/\s+/g, "_")}_Dossier.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleRegenerate = () => {
     if (!selectedScheme) return;
@@ -121,13 +186,21 @@ export default function CopilotPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleDownloadDossier}
+            className="px-4 py-2.5 bg-[var(--paper)] hover:bg-[#E4DCCB] text-[var(--ink)] border border-[var(--rule)] text-xs font-mono font-bold rounded flex items-center gap-2 transition-colors shadow-xs"
+          >
+            <FileText className="w-4 h-4 text-[var(--stamp)]" />
+            <span>DOWNLOAD DOSSIER (.TXT)</span>
+          </button>
+
           <button
             onClick={() => setShowPdfPreview(true)}
             className="px-4 py-2.5 bg-[var(--stamp)] hover:bg-[#852F20] text-white text-xs font-mono font-bold rounded flex items-center gap-2 transition-colors shadow-sm"
           >
             <Download className="w-4 h-4" />
-            <span>EXPORT READY-TO-FILE DOSSIER (PDF)</span>
+            <span>EXPORT FORMAL DOSSIER (PDF)</span>
           </button>
         </div>
       </div>
@@ -638,5 +711,17 @@ export default function CopilotPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CopilotPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-[1600px] mx-auto px-6 py-16 text-center font-mono text-xs text-[var(--ink-soft)]">
+        Loading Proposal Synthesis workspace...
+      </div>
+    }>
+      <CopilotInner />
+    </Suspense>
   );
 }

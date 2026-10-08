@@ -80,11 +80,11 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
             )}
 
             <Link
-              href="/copilot"
-              className="px-4 py-2 bg-[var(--stamp)] hover:bg-[#852F20] text-white text-xs font-mono font-bold rounded flex items-center gap-1.5 transition-colors shadow-sm"
+              href={`/copilot?schemeId=${scheme.id}`}
+              className="px-4 py-2 bg-[var(--stamp)] hover:bg-[#852F20] text-white text-xs font-mono font-bold rounded flex items-center gap-1.5 transition-colors shadow-sm no-underline"
             >
               <BotMessageSquare className="w-4 h-4" />
-              <span>Draft Co-Pilot Dossier</span>
+              <span>Draft Proposal in Co-Pilot</span>
             </Link>
           </div>
         </div>
@@ -104,15 +104,15 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
             <span className="text-[var(--ink)] font-semibold">{formatDate(scheme.deadline)}</span>
           </div>
           <div>
-            <span className="text-[var(--ink-soft)] block text-[10px] uppercase">HARD AST ELIGIBILITY</span>
+            <span className="text-[var(--ink-soft)] block text-[10px] uppercase">RULES ELIGIBILITY</span>
             <span className={evalResult?.isEligible ? "text-[var(--verified)] font-bold text-sm" : "text-[var(--pending)] font-bold text-sm"}>
-              {evalResult?.isEligible ? "✓ 100% Eligible" : `${evalResult?.matchScore || 0}% Fit`}
+              {evalResult?.isEligible ? "✓ 100% Eligible" : `${evalResult?.matchScore || 0}% Match`}
             </span>
           </div>
           <div>
-            <span className="text-[var(--ink-soft)] block text-[10px] uppercase">SEMANTIC INTENT FIT</span>
+            <span className="text-[var(--ink-soft)] block text-[10px] uppercase">MISSION ALIGNMENT</span>
             <span className="text-[var(--verified)] font-bold text-sm">
-              🎯 {semanticResult.semanticScore}% Match
+              🎯 {semanticResult.semanticScore}% Fit
             </span>
           </div>
           <div>
@@ -122,12 +122,12 @@ export default function SchemeDetailPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {/* Semantic Thematic Synergy Card (Pillar C Highlight) */}
+      {/* Semantic Thematic Synergy Card */}
       <div className="bg-[var(--paper-deep)] border border-[var(--rule)] rounded p-6 space-y-4 shadow-xs">
         <div className="flex items-center justify-between border-b border-[var(--rule)]/60 pb-3">
           <div className="flex items-center gap-2 text-sm font-serif font-bold text-[var(--ink)]">
             <Sparkles className="w-4 h-4 text-[var(--stamp)]" />
-            <span>Pillar C · Thematic Intent &amp; Mission Synergy Analysis</span>
+            <span>Thematic Fit &amp; Mission Synergy Analysis</span>
           </div>
           <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[var(--verified-bg)] text-[var(--verified)] border border-[var(--verified)]/30">
             {semanticResult.synergyLevel} SYNERGY

@@ -100,7 +100,7 @@ export function Header() {
             {/* Primary Navigation Tabs */}
             <nav className="hidden md:flex items-center gap-5 lg:gap-6 text-[13px]">
               
-              {/* Schemes catalog */}
+              {/* Discover grants */}
               <Link
                 href="/schemes"
                 className={`flex items-center gap-2 py-1.5 transition-colors relative no-underline cursor-pointer ${
@@ -110,7 +110,7 @@ export function Header() {
                 }`}
               >
                 <FileText className={`w-4 h-4 ${isSchemesActive ? "text-[#2A2621]" : "text-[#5A554C]"}`} strokeWidth={1.8} />
-                <span>Schemes catalog</span>
+                <span>Discover grants</span>
               </Link>
 
               {/* Document vault */}
@@ -139,17 +139,17 @@ export function Header() {
                 <span>Pipeline</span>
               </Link>
 
-              {/* Ledger */}
+              {/* Proposal Co-Pilot */}
               <Link
-                href="/compliance"
+                href="/copilot"
                 className={`flex items-center gap-2 py-1.5 transition-colors relative no-underline cursor-pointer ${
-                  isLedgerActive
+                  pathname === "/copilot"
                     ? "text-[#2A2621] font-semibold after:content-[''] after:absolute after:bottom-[-7px] after:left-0 after:right-0 after:h-[2px] after:bg-[#2A2621]"
                     : "text-[#5A554C] hover:text-[#2A2621] font-medium"
                 }`}
               >
-                <Receipt className={`w-4 h-4 ${isLedgerActive ? "text-[#2A2621]" : "text-[#5A554C]"}`} strokeWidth={1.8} />
-                <span>Ledger</span>
+                <Sparkles className={`w-4 h-4 ${pathname === "/copilot" ? "text-[#2A2621]" : "text-[#5A554C]"}`} strokeWidth={1.8} />
+                <span>Proposal co-pilot</span>
               </Link>
 
               {/* More ⌵ Dropdown */}
@@ -172,38 +172,39 @@ export function Header() {
                 </button>
 
                 {isMoreOpen && (
-                  <div className="absolute top-[calc(100%+12px)] left-0 w-52 bg-[#EFEAE0] border border-[rgba(42,38,33,0.14)] rounded-xl shadow-lg p-1.5 z-50 text-[13px] font-mono animate-fade-in">
+                  <div className="absolute top-[calc(100%+12px)] left-0 w-56 bg-[#EFEAE0] border border-[rgba(42,38,33,0.14)] rounded-xl shadow-lg p-1.5 z-50 text-[13px] font-sans animate-fade-in">
                     <Link
                       href="/eligibility"
                       onClick={() => setIsMoreOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
                     >
                       <Compass className="w-4 h-4 text-[#B5452B]" />
-                      <span>Eligibility Trace</span>
+                      <span>Eligibility explainer</span>
                     </Link>
                     <Link
-                      href="/copilot"
+                      href="/compliance"
                       onClick={() => setIsMoreOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
                     >
-                      <Sparkles className="w-4 h-4 text-[#B5452B]" />
-                      <span>Proposal Co-Pilot</span>
+                      <Receipt className="w-4 h-4 text-[#B5452B]" />
+                      <span>GFR 12-A Ledger</span>
                     </Link>
                     <Link
                       href="/counterfactual"
                       onClick={() => setIsMoreOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
                     >
                       <Receipt className="w-4 h-4 text-[#B5452B]" />
-                      <span>Compliance Audit</span>
+                      <span>What-if simulator</span>
                     </Link>
+                    <div className="h-[1px] bg-[rgba(42,38,33,0.1)] my-1" />
                     <Link
                       href="/ingestion"
                       onClick={() => setIsMoreOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 text-[#5A554C] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 text-[#8b8579] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] rounded-lg no-underline transition-colors text-xs font-mono"
                     >
-                      <Database className="w-4 h-4 text-[#B5452B]" />
-                      <span>Harvester Engine</span>
+                      <Database className="w-3.5 h-3.5 text-[#8b8579]" />
+                      <span>Catalog harvester (Admin)</span>
                     </Link>
                   </div>
                 )}
@@ -404,19 +405,10 @@ export function Header() {
               </div>
 
               {/* Full Section Directory */}
-              <div className="space-y-1 font-mono text-xs">
-                <div className="text-[10px] uppercase font-bold text-[#5A554C] px-3 py-1">
-                  Core Modules
+              <div className="space-y-1 font-sans text-xs">
+                <div className="text-[10px] uppercase font-bold text-[#5A554C] px-3 py-1 font-mono">
+                  Primary Workflow
                 </div>
-
-                <Link
-                  href="/eligibility"
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
-                >
-                  <Compass className="w-4 h-4 text-[#B5452B]" />
-                  <span>Eligibility Trace Reasoner</span>
-                </Link>
 
                 <Link
                   href="/schemes"
@@ -424,7 +416,7 @@ export function Header() {
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
                 >
                   <FileText className="w-4 h-4 text-[#B5452B]" />
-                  <span>Schemes Catalog</span>
+                  <span>Discover Grants</span>
                 </Link>
 
                 <Link
@@ -442,7 +434,29 @@ export function Header() {
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
                 >
                   <GitBranch className="w-4 h-4 text-[#B5452B]" />
-                  <span>Pipeline Tracker</span>
+                  <span>Application Pipeline</span>
+                </Link>
+
+                <Link
+                  href="/copilot"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
+                >
+                  <Sparkles className="w-4 h-4 text-[#B5452B]" />
+                  <span>Proposal Co-Pilot</span>
+                </Link>
+
+                <div className="pt-3 text-[10px] uppercase font-bold text-[#5A554C] px-3 py-1 font-mono">
+                  Analysis &amp; Compliance
+                </div>
+
+                <Link
+                  href="/eligibility"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
+                >
+                  <Compass className="w-4 h-4 text-[#B5452B]" />
+                  <span>Eligibility Explainer</span>
                 </Link>
 
                 <Link
@@ -454,36 +468,25 @@ export function Header() {
                   <span>GFR 12-A Ledger</span>
                 </Link>
 
-                <div className="pt-2 text-[10px] uppercase font-bold text-[#5A554C] px-3 py-1">
-                  AI &amp; Automation Desk
-                </div>
-
-                <Link
-                  href="/copilot"
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
-                >
-                  <Sparkles className="w-4 h-4 text-[#B5452B]" />
-                  <span>Proposal Co-Pilot</span>
-                </Link>
-
                 <Link
                   href="/counterfactual"
                   onClick={() => setIsDrawerOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
                 >
                   <Receipt className="w-4 h-4 text-[#B5452B]" />
-                  <span>What-If Compliance Simulator</span>
+                  <span>What-If Simulator</span>
                 </Link>
 
-                <Link
-                  href="/ingestion"
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline font-medium"
-                >
-                  <Database className="w-4 h-4 text-[#B5452B]" />
-                  <span>Harvester Portal Scraper</span>
-                </Link>
+                <div className="pt-2">
+                  <Link
+                    href="/ingestion"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-[#8b8579] hover:text-[#2A2621] hover:bg-[rgba(42,38,33,0.06)] transition-colors no-underline text-xs font-mono"
+                  >
+                    <Database className="w-3.5 h-3.5 text-[#8b8579]" />
+                    <span>Catalog Harvester (Admin)</span>
+                  </Link>
+                </div>
               </div>
 
             </div>

@@ -1,16 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatINR } from "@/lib/utils";
 
 export default function HomePage() {
   const { currentOrg, schemes, getOrgEvaluation } = useApp();
+  const { user } = useAuth();
 
   // Find a scheme to display in the case file
   const activeScheme = schemes[0] || null;
   const evalResult = activeScheme ? getOrgEvaluation(activeScheme.id) : null;
+
+  // Real-time screening count
+  const eligibleSchemes = schemes.filter(s => getOrgEvaluation(s.id)?.isEligible);
+  const totalPotentialFunding = eligibleSchemes.reduce((sum, s) => sum + s.maxFundingAmount, 0);
 
   return (
     <div>
@@ -32,11 +38,11 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-wrap items-center gap-5 mb-2">
-            <Link href="/eligibility" className="btn-ink text-[14.5px] py-2.5 px-5">
-              Start eligibility check
+            <Link href="/schemes" className="btn-ink text-[14.5px] py-2.5 px-5">
+              Discover matched grants →
             </Link>
-            <Link href="/schemes" className="link-quiet">
-              Browse grant schemes →
+            <Link href="/documents" className="link-quiet">
+              Document Vault &amp; Credentials →
             </Link>
           </div>
 
@@ -46,11 +52,13 @@ export default function HomePage() {
               <div className="casefile-inner">
                 <div className="casefile-top">
                   <div>
-                    <div className="casefile-label">SAMPLE CASE FILE — READ ONLY</div>
+                    <div className="casefile-label">
+                      {user ? "ACTIVE AUDIT FILE · LIVE REGISTRATION CHECK" : "SAMPLE CASE FILE — READ ONLY"}
+                    </div>
                     <div className="casefile-title">{currentOrg.name}</div>
                   </div>
                   <div className="casefile-label">
-                    Checked against: {activeScheme.title}
+                    Evaluating against: <b>{activeScheme.title}</b>
                   </div>
                 </div>
 
@@ -60,7 +68,6 @@ export default function HomePage() {
                   <div>Udyam tier: <b>{currentOrg.udyamTier !== 'None' ? currentOrg.udyamTier : 'Unregistered'}</b></div>
                   <div>Location: <b>{currentOrg.state}, India</b></div>
                 </div>
-
 
               <ul className="trace">
                 <li>
@@ -74,7 +81,7 @@ export default function HomePage() {
                   <span className="mark yes">✓</span>
                   <span className="trace-text">
                     <b>Turnover within limit</b> — {formatINR(currentOrg.turnoverInr, true)} is under the {formatINR(activeScheme.maxFundingAmount * 50, true)} ceiling
-                    <span>Rule: turnover LTE 2500000000</span>
+                    <span>Rule: turnover within permissible grant limit</span>
                   </span>
                 </li>
                 <li>
@@ -82,8 +89,8 @@ export default function HomePage() {
                     {currentOrg.complianceFlags.has80G ? "✓" : "✕"}
                   </span>
                   <span className="trace-text">
-                    <b>{currentOrg.complianceFlags.has80G ? "80G registration verified" : "80G registration missing"}</b> — required for tax-exempt disbursement tranche
-                    <span>Rule: registrations.80G EQUALS true — {currentOrg.complianceFlags.has80G ? "valid certificate logged" : "currently pending"}</span>
+                    <b>{currentOrg.complianceFlags.has80G ? "80G tax exemption active" : "80G registration pending"}</b> — required for tax-exempt disbursement tranche
+                    <span>Rule: registrations.80G — {currentOrg.complianceFlags.has80G ? "valid certificate on record" : "provisional filing required"}</span>
                   </span>
                 </li>
                 <li>
@@ -91,7 +98,7 @@ export default function HomePage() {
                     {currentOrg.complianceFlags.hasUdyam ? "✓" : "✕"}
                   </span>
                   <span className="trace-text">
-                    <b>{currentOrg.complianceFlags.hasUdyam ? "Udyam tier eligible" : "Udyam registration required"}</b> — qualifies for enhanced subsidy band
+                    <b>{currentOrg.complianceFlags.hasUdyam ? "Udyam tier verified" : "Udyam registration required"}</b> — qualifies for enhanced subsidy band
                     <span>Rule: udyam_tier IN [Micro, Small, Medium]</span>
                   </span>
                 </li>
@@ -99,10 +106,13 @@ export default function HomePage() {
 
               <div className="stamp-row">
                 <div className="stamp">
-                  6 of 14 screened — eligible now
+                  {eligibleSchemes.length} of {schemes.length} screened — eligible now
                 </div>
                 <p>
-                  Filing additional registrations (12A/80G, CSR-1) opens 3 more schemes worth an estimated ₹35L in funding.
+                  {eligibleSchemes.length > 0 
+                    ? `Currently unlocks an estimated ${formatINR(totalPotentialFunding, true)} in non-dilutive government and CSR grant capital.`
+                    : "Upload missing registration certificates in your Document Vault to unlock immediate grant programs."
+                  }
                 </p>
               </div>
             </div>

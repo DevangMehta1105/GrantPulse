@@ -9,23 +9,26 @@ import { cn } from "@/lib/utils";
 import { evaluateSemanticFit } from "@/lib/semantic/matcher";
 
 export default function SchemesPage() {
-  const { schemes, currentOrg, getOrgEvaluation } = useApp();
+  const { schemes, currentOrg, getOrgEvaluation, applications } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGrantType, setSelectedGrantType] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "ELIGIBLE" | "ACTION_NEEDED" | "IN_PIPELINE">("ALL");
   const [sortBy, setSortBy] = useState<"AST" | "SEMANTIC" | "AMOUNT">("SEMANTIC");
 
   // Pre-calculate semantic and AST scores for all schemes
   const enrichedSchemes = schemes.map(scheme => {
     const astResult = getOrgEvaluation(scheme.id);
     const semanticResult = evaluateSemanticFit(currentOrg, scheme);
+    const existingApp = applications.find(a => a.orgId === currentOrg.id && a.schemeId === scheme.id);
     return {
       scheme,
       astResult,
-      semanticResult
+      semanticResult,
+      existingApp
     };
   });
 
-  const filteredSchemes = enrichedSchemes.filter(({ scheme }) => {
+  const filteredSchemes = enrichedSchemes.filter(({ scheme, astResult, existingApp }) => {
     const matchesSearch = 
       scheme.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       scheme.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -33,7 +36,13 @@ export default function SchemesPage() {
       scheme.sector.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesType = selectedGrantType === "ALL" || scheme.grantType === selectedGrantType;
-    return matchesSearch && matchesType;
+    
+    let matchesStatus = true;
+    if (statusFilter === "ELIGIBLE") matchesStatus = !!astResult?.isEligible;
+    else if (statusFilter === "ACTION_NEEDED") matchesStatus = !astResult?.isEligible;
+    else if (statusFilter === "IN_PIPELINE") matchesStatus = !!existingApp;
+
+    return matchesSearch && matchesType && matchesStatus;
   });
 
   // Sort
@@ -59,13 +68,13 @@ export default function SchemesPage() {
         <div>
           <div className="font-mono text-[11px] tracking-widest uppercase text-[var(--stamp)] mb-1 flex items-center gap-2 font-semibold">
             <span className="w-2 h-2 rounded-full bg-[var(--stamp)] animate-pulse"></span>
-            Pillars A, B &amp; C · Hybrid Grant Discovery Engine
+            Grant Discovery &amp; Eligibility Matching
           </div>
           <h1 className="text-3xl font-serif font-bold text-[var(--ink)] tracking-tight">
-            Government &amp; Philanthropic Grant Catalog
+            Discover Government &amp; CSR Grants
           </h1>
           <p className="text-sm text-[var(--ink-soft)] mt-1 max-w-3xl">
-            Live hybrid matching combining <strong>Deterministic AST Boolean Rules</strong> (hard eligibility) with <strong>Semantic Vector Embeddings</strong> (thematic intent &amp; mission alignment).
+            Live matching checking your legal entity, annual turnover, and uploaded compliance registrations against official guidelines.
           </p>
         </div>
 
@@ -123,6 +132,61 @@ export default function SchemesPage() {
         </div>
       </div>
 
+      {/* Quick Status Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono no-scrollbar">
+        <button
+          onClick={() => setStatusFilter("ALL")}
+          className={cn(
+            "px-3 py-1.5 rounded transition-colors font-semibold flex items-center gap-1.5 cursor-pointer border whitespace-nowrap",
+            statusFilter === "ALL" 
+              ? "bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]" 
+              : "bg-[var(--paper-deep)] text-[var(--ink-soft)] border-[var(--rule)] hover:border-[var(--ink)]"
+          )}
+        >
+          <span>All Schemes</span>
+          <span className="opacity-70">({enrichedSchemes.length})</span>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter("ELIGIBLE")}
+          className={cn(
+            "px-3 py-1.5 rounded transition-colors font-semibold flex items-center gap-1.5 cursor-pointer border whitespace-nowrap",
+            statusFilter === "ELIGIBLE" 
+              ? "bg-[#3F6B52] text-white border-[#3F6B52]" 
+              : "bg-[var(--paper-deep)] text-[var(--ink-soft)] border-[var(--rule)] hover:border-[#3F6B52]"
+          )}
+        >
+          <span>✓ 100% Eligible</span>
+          <span className="opacity-70">({enrichedSchemes.filter(s => s.astResult?.isEligible).length})</span>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter("ACTION_NEEDED")}
+          className={cn(
+            "px-3 py-1.5 rounded transition-colors font-semibold flex items-center gap-1.5 cursor-pointer border whitespace-nowrap",
+            statusFilter === "ACTION_NEEDED" 
+              ? "bg-[#B5452B] text-white border-[#B5452B]" 
+              : "bg-[var(--paper-deep)] text-[var(--ink-soft)] border-[var(--rule)] hover:border-[#B5452B]"
+          )}
+        >
+          <span>Action Needed</span>
+          <span className="opacity-70">({enrichedSchemes.filter(s => !s.astResult?.isEligible).length})</span>
+        </button>
+
+        <button
+          onClick={() => setStatusFilter("IN_PIPELINE")}
+          className={cn(
+            "px-3 py-1.5 rounded transition-colors font-semibold flex items-center gap-1.5 cursor-pointer border whitespace-nowrap",
+            statusFilter === "IN_PIPELINE" 
+              ? "bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]" 
+              : "bg-[var(--paper-deep)] text-[var(--ink-soft)] border-[var(--rule)] hover:border-[var(--ink)]"
+          )}
+        >
+          <span>In Pipeline</span>
+          <span className="opacity-70">({enrichedSchemes.filter(s => !!s.existingApp).length})</span>
+        </button>
+      </div>
+
       {/* Filter and Sorting Bar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[var(--paper-deep)] p-4 rounded border border-[var(--rule)] shadow-xs">
         <div className="relative flex-1 w-full">
@@ -158,7 +222,7 @@ export default function SchemesPage() {
                 sortBy === "SEMANTIC" ? "bg-[var(--ink)] text-[var(--paper)]" : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
               )}
             >
-              🎯 Intent Fit
+              Intent Fit
             </button>
             <button
               onClick={() => setSortBy("AST")}
@@ -167,7 +231,7 @@ export default function SchemesPage() {
                 sortBy === "AST" ? "bg-[var(--ink)] text-[var(--paper)]" : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
               )}
             >
-              ⚡ AST Match
+              Rules Match
             </button>
             <button
               onClick={() => setSortBy("AMOUNT")}
@@ -184,7 +248,7 @@ export default function SchemesPage() {
 
       {/* Schemes Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSchemes.map(({ scheme, astResult, semanticResult }) => {
+        {filteredSchemes.map(({ scheme, astResult, semanticResult, existingApp }) => {
           return (
             <div
               key={scheme.id}
@@ -194,9 +258,16 @@ export default function SchemesPage() {
                 {/* Source & Tags */}
                 <div className="flex items-center justify-between font-mono text-[10px] text-[var(--ink-soft)]">
                   <span className="font-semibold">{scheme.sourcePortal}</span>
-                  <span className="uppercase text-[var(--stamp)] font-bold bg-[var(--paper)] px-1.5 py-0.2 rounded border border-[var(--rule)]">
-                    {scheme.grantType}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {existingApp && (
+                      <span className="bg-[var(--ink)] text-[var(--paper)] px-1.5 py-0.2 rounded font-bold uppercase text-[9px]">
+                        In Pipeline · {existingApp.currentState}
+                      </span>
+                    )}
+                    <span className="uppercase text-[var(--stamp)] font-bold bg-[var(--paper)] px-1.5 py-0.2 rounded border border-[var(--rule)]">
+                      {scheme.grantType}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Title & Ministry */}
@@ -236,13 +307,13 @@ export default function SchemesPage() {
                     </span>
                   </div>
 
-                  {/* Dual Badges: AST Rule Match & Semantic Intent Fit */}
+                  {/* Dual Badges */}
                   <div className="flex flex-col items-end gap-1">
                     <span className={cn(
                       "px-2 py-0.5 rounded text-[10px] font-bold",
                       astResult?.isEligible ? "bg-[var(--verified-bg)] text-[var(--verified)]" : "bg-[var(--pending-bg)] text-[var(--pending)]"
                     )}>
-                      {astResult?.isEligible ? "✓ AST Eligible" : `${astResult?.matchScore || 0}% AST Fit`}
+                      {astResult?.isEligible ? "✓ Eligible" : `Action Needed (${astResult?.matchScore || 0}%)`}
                     </span>
                     <span className="text-[10px] font-bold text-[#3F6B52]">
                       🎯 {semanticResult.semanticScore}% Intent Fit
@@ -250,13 +321,23 @@ export default function SchemesPage() {
                   </div>
                 </div>
 
-                <Link
-                  href={`/schemes/${scheme.id}`}
-                  className="w-full py-2 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-                >
-                  <span>Inspect AST &amp; Co-Pilot</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                {existingApp ? (
+                  <Link
+                    href="/pipeline"
+                    className="w-full py-2 bg-[var(--paper)] hover:bg-[#E4DCCB] text-[var(--ink)] border border-[var(--rule)] text-xs font-mono font-bold rounded flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <span>Track in Pipeline ({existingApp.currentState})</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/schemes/${scheme.id}`}
+                    className="w-full py-2 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  >
+                    <span>View Eligibility &amp; Apply</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
               </div>
             </div>
           );
