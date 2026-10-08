@@ -64,15 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(authUser);
           localStorage.setItem("gp_auth_user", JSON.stringify(authUser));
         } else {
-          // Check local persistence
-          const savedUser = localStorage.getItem("gp_auth_user");
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-            } catch {
-              setUser(null);
-            }
-          }
+          // Session expired or not found — clear stale local cache
+          localStorage.removeItem("gp_auth_user");
+          setUser(null);
         }
         setIsLoading(false);
       });

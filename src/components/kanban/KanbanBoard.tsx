@@ -34,8 +34,8 @@ function getNextAllowedStates(current: ApplicationState): ApplicationState[] {
     case "Discovered": return ["Docs Verified", "Rejected"];
     case "Docs Verified": return ["Drafting", "Discovered", "Rejected"];
     case "Drafting": return ["Applied", "Docs Verified", "Rejected"];
-    case "Applied": return ["Under Review", "Drafting", "Rejected"];
-    case "Under Review": return ["Sanctioned", "Rejected", "Applied"];
+    case "Applied": return ["Under Review", "Rejected"];
+    case "Under Review": return ["Sanctioned", "Rejected", "Drafting"];
     case "Sanctioned": return [];
     case "Rejected": return ["Discovered"];
     default: return [];
@@ -429,10 +429,21 @@ export function KanbanBoard() {
                 </button>
               </div>
 
-              <div className="p-3 bg-[var(--verified-bg)] border-b border-[var(--rule)] font-mono text-[11px] text-[var(--verified)] flex items-center gap-2">
+              <div className={cn(
+                "p-3 border-b font-mono text-[11px] flex items-center gap-2",
+                auditVerification?.isValid
+                  ? "bg-[var(--verified-bg)] border-[var(--rule)] text-[var(--verified)]"
+                  : auditVerification === null
+                  ? "bg-[var(--paper-deep)] border-[var(--rule)] text-[var(--ink-soft)]"
+                  : "bg-red-50 border-red-200 text-red-700"
+              )}>
                 <ShieldCheck className="w-4 h-4" />
                 <span>
-                  ✓ Hash chain verified: {selectedAppForAudit.stateHistory.length} state transitions cryptographically linked with zero tampering.
+                  {auditVerification === null
+                    ? "Verifying SHA-256 chain integrity..."
+                    : auditVerification.isValid
+                    ? `✓ Hash chain verified: ${selectedAppForAudit.stateHistory.length} transitions cryptographically linked. No tampering detected.`
+                    : `⚠ Chain integrity failure: ${auditVerification.error}`}
                 </span>
               </div>
 

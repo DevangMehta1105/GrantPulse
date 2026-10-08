@@ -478,7 +478,7 @@ export default function CopilotPage() {
                 </div>
                 <div>
                   <span className="text-[var(--ink-soft)] block text-[10px]">GSTIN</span>
-                  <span className="font-bold text-[var(--ink)]">{dossier.applicant.gstin || "29AABCV9821K1Z3"}</span>
+                  <span className="font-bold text-[var(--ink)]">{dossier.applicant.gstin || "[NOT PROVIDED]"}</span>
                 </div>
                 <div>
                   <span className="text-[var(--ink-soft)] block text-[10px]">UDYAM REGISTRATION</span>
@@ -486,11 +486,11 @@ export default function CopilotPage() {
                 </div>
                 <div>
                   <span className="text-[var(--ink-soft)] block text-[10px]">12A / 80G URN</span>
-                  <span className="font-bold text-[var(--ink)]">{dossier.applicant.reg80G || "AABTA4921KG20218"}</span>
+                  <span className="font-bold text-[var(--ink)]">{dossier.applicant.reg80G || "[NOT PROVIDED]"}</span>
                 </div>
                 <div>
                   <span className="text-[var(--ink-soft)] block text-[10px]">MCA CSR-1 NO</span>
-                  <span className="font-bold text-[var(--ink)]">{dossier.applicant.csr1Number || "CSR00049281"}</span>
+                  <span className="font-bold text-[var(--ink)]">{dossier.applicant.csr1Number || "[NOT PROVIDED]"}</span>
                 </div>
               </div>
 

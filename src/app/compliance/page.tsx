@@ -34,11 +34,14 @@ export default function CompliancePage() {
     a => a.orgId === currentOrg?.id && (a.currentState === "Sanctioned" || a.sanctionedAmount)
   );
 
+  // Scope all application selections to the current org to prevent cross-org expense logging
+  const orgApps = applications.filter(a => a.orgId === currentOrg?.id);
+
   const [selectedAppId, setSelectedAppId] = useState<string>(
-    sanctionedApps.length > 0 ? sanctionedApps[0].id : (applications[0]?.id || "")
+    sanctionedApps.length > 0 ? sanctionedApps[0].id : (orgApps[0]?.id || "")
   );
 
-  const activeApp = applications.find(a => a.id === selectedAppId) || applications[0];
+  const activeApp = orgApps.find(a => a.id === selectedAppId) || orgApps[0];
   const activeScheme = schemes.find(s => s.id === activeApp?.schemeId) || schemes[0];
 
   const appExpenses = expenses.filter(e => e.applicationId === activeApp?.id);
@@ -164,7 +167,7 @@ export default function CompliancePage() {
             onChange={(e) => setSelectedAppId(e.target.value)}
             className="bg-[var(--paper)] border border-[var(--rule)] px-3 py-1.5 font-bold text-[var(--ink)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--stamp)] cursor-pointer"
           >
-            {applications.map(app => {
+            {orgApps.map(app => {
               const s = schemes.find(sch => sch.id === app.schemeId);
               return (
                 <option key={app.id} value={app.id}>

@@ -265,7 +265,12 @@ export default function DocumentsPage() {
                   type="button"
                   onClick={() => {
                     const preset = CERTIFICATE_PRESETS[selectedDocType];
-                    setOcrTextInput(preset.sampleText.replace(/VIDYUT MICRO MOBILITY PRIVATE LIMITED/g, currentOrg.name.toUpperCase()));
+                    setOcrTextInput(
+                      preset.sampleText
+                        .replace(/VIDYUT MICRO MOBILITY PRIVATE LIMITED/g, currentOrg.name.toUpperCase())
+                        .replace(/AROGYA RURAL HEALTHCARE TRUST/g, currentOrg.name.toUpperCase())
+                        .replace(/GREENROOTS AGRO FOUNDATION/g, currentOrg.name.toUpperCase())
+                    );
                   }}
                   className="text-[10px] text-[var(--stamp)] hover:underline flex items-center gap-1 font-medium"
                 >
