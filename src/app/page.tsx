@@ -23,6 +23,33 @@ export default function HomePage() {
       {/* ---------- HERO SECTION ---------- */}
       <section className="pt-20 pb-16">
         <div className="wrap">
+          {/* Incomplete Profile Alert for First-time / Google Users */}
+          {user && !user.onboardingCompleted && (
+            <div className="mb-8 p-5 bg-[#FFF9EE] border-2 border-[#E0A838] rounded-xl shadow-xs text-[#3A2D13]">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-full bg-[#FCE8BD] flex items-center justify-center flex-shrink-0 text-lg">
+                    ⚠️
+                  </div>
+                  <div>
+                    <h2 className="text-base font-serif font-bold text-[#2A200F]">
+                      Organization Profile Incomplete — Questionnaire Pending
+                    </h2>
+                    <p className="text-[13px] font-sans text-[#5C4A26] mt-0.5 leading-relaxed">
+                      You are signed in as <b>{user.email}</b>, but your enterprise registrations, turnover bracket, and compliance clearances have not been submitted. GrantPulse AST match scores will default to provisional estimates until your questionnaire is completed.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/onboarding"
+                  className="px-4 py-2.5 bg-[#22271F] hover:bg-[#343D31] text-[#FAF7F0] rounded-md text-xs font-mono font-bold whitespace-nowrap transition-all shadow-xs flex items-center gap-1.5 self-stretch sm:self-auto justify-center"
+                >
+                  Complete Questionnaire Now →
+                </Link>
+              </div>
+            </div>
+          )}
+
           <div className="font-mono text-[12.5px] tracking-wider uppercase text-[var(--stamp)] mb-4">
             For MSMEs &amp; NGOs registering for government and CSR grants
           </div>
@@ -53,7 +80,11 @@ export default function HomePage() {
                 <div className="casefile-top">
                   <div>
                     <div className="casefile-label">
-                      {user ? "ACTIVE AUDIT FILE · LIVE REGISTRATION CHECK" : "SAMPLE CASE FILE — READ ONLY"}
+                      {user ? (
+                        !user.onboardingCompleted 
+                          ? "PROVISIONAL FILE · QUESTIONNAIRE PENDING" 
+                          : "ACTIVE AUDIT FILE · LIVE REGISTRATION CHECK"
+                      ) : "SAMPLE CASE FILE — READ ONLY"}
                     </div>
                     <div className="casefile-title">{currentOrg.name}</div>
                   </div>

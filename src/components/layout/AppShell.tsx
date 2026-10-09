@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Header } from "./Header";
+import { WorkflowStepper } from "./WorkflowStepper";
 import { useAuth } from "@/context/AuthContext";
 
 const PROTECTED_ROUTES = [
@@ -11,7 +12,8 @@ const PROTECTED_ROUTES = [
   "/compliance",
   "/copilot",
   "/counterfactual",
-  "/ingestion"
+  "/ingestion",
+  "/onboarding"
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -19,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
-  const isAuthRoute = pathname === "/login" || pathname === "/signup";
+  const isAuthRoute = pathname === "/login" || pathname === "/signup" || pathname.startsWith("/auth/") || pathname === "/onboarding";
 
   // Client-side authentication guard for protected internal routes
   useEffect(() => {
@@ -53,7 +55,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <WorkflowStepper />
+      <main key={pathname} className="flex-1 animate-fadeInUp">
         {children}
       </main>
       <footer className="border-t border-[var(--rule)] py-9 text-[13px] text-[var(--ink-soft)] bg-[var(--paper)]">

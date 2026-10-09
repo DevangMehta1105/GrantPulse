@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { evaluateSemanticFit } from "@/lib/semantic/matcher";
 
 export default function SchemesPage() {
-  const { schemes, currentOrg, getOrgEvaluation, applications } = useApp();
+  const { schemes, currentOrg, getOrgEvaluation, applications, isHydrating } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGrantType, setSelectedGrantType] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ELIGIBLE" | "ACTION_NEEDED" | "IN_PIPELINE">("ALL");
@@ -344,7 +344,19 @@ export default function SchemesPage() {
         })}
       </div>
 
-      {filteredSchemes.length === 0 && (
+      {isHydrating && schemes.length === 0 && (
+        <div className="bg-[var(--paper-deep)] border border-[var(--rule)] rounded-lg p-12 text-center space-y-4 font-mono animate-pulse">
+          <div className="w-10 h-10 mx-auto rounded-full border-2 border-[var(--stamp)] border-t-transparent animate-spin"></div>
+          <div className="font-serif text-lg font-bold text-[var(--ink)]">
+            Syncing Schemes Catalog with Cloud Database...
+          </div>
+          <p className="text-xs text-[var(--ink-soft)] max-w-md mx-auto">
+            Retrieving indexed government and CSR grant schemes from Supabase. Live AST criteria and matching models initializing.
+          </p>
+        </div>
+      )}
+
+      {!isHydrating && filteredSchemes.length === 0 && (
         <div className="bg-[var(--paper-deep)] border border-[var(--rule)] rounded-lg p-12 text-center space-y-3 font-mono">
           <div className="font-serif text-lg font-bold text-[var(--ink)]">
             No Schemes Found in Catalog
@@ -365,6 +377,34 @@ export default function SchemesPage() {
               </Link>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Lifecycle Flow Action Banner */}
+      {filteredSchemes.length > 0 && (
+        <div className="mt-8 p-5 bg-[#E6DFD0] border border-[#22271F]/20 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 font-mono">
+          <div className="space-y-1 text-center md:text-left">
+            <div className="text-[10px] tracking-widest uppercase text-[var(--stamp)] font-bold flex items-center justify-center md:justify-start gap-1.5">
+              <span>Next Stage of Grant Application</span>
+              <span>&rarr;</span>
+            </div>
+            <div className="font-serif font-bold text-base text-[var(--ink)]">
+              Ready to formalize your application?
+            </div>
+            <p className="text-xs text-[var(--ink-soft)]">
+              Track candidate grants through FSM application states and verify mandatory compliance attachments.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/pipeline"
+              className="px-5 py-2.5 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded-lg transition-all shadow-sm flex items-center gap-2"
+            >
+              <span>Advance to Step 3: Application Pipeline</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       )}
     </div>

@@ -13,14 +13,29 @@ import { evaluateSemanticFit } from "@/lib/semantic/matcher";
 export default function SchemeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const router = useRouter();
-  const { schemes, currentOrg, getOrgEvaluation, getOrgDocumentReadiness, createNewApplication, applications } = useApp();
+  const { schemes, currentOrg, getOrgEvaluation, getOrgDocumentReadiness, createNewApplication, applications, isHydrating } = useApp();
   const [isApplying, setIsApplying] = useState(false);
 
   const scheme = schemes.find(s => s.id === unwrappedParams.id);
+
+  if (!scheme && isHydrating) {
+    return (
+      <div className="max-w-4xl mx-auto py-24 text-center space-y-4 font-mono">
+        <div className="w-8 h-8 mx-auto rounded-full border-2 border-[var(--stamp)] border-t-transparent animate-spin"></div>
+        <div className="text-sm font-bold text-[var(--ink)]">Loading grant details from catalog...</div>
+      </div>
+    );
+  }
+
   if (!scheme) {
     return (
-      <div className="max-w-4xl mx-auto py-16 text-center text-sm text-[var(--ink-soft)] font-mono">
-        Scheme not found in catalog. <Link href="/schemes" className="text-[var(--ink)] underline font-bold">Return to catalog</Link>
+      <div className="max-w-4xl mx-auto py-16 text-center text-sm text-[var(--ink-soft)] font-mono space-y-3">
+        <div>Scheme not found in catalog or has been retired.</div>
+        <div>
+          <Link href="/schemes" className="px-4 py-2 bg-[var(--ink)] text-[var(--paper)] rounded text-xs inline-block font-bold">
+            Return to Grant Catalog
+          </Link>
+        </div>
       </div>
     );
   }

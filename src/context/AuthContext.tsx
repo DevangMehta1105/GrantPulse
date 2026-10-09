@@ -14,16 +14,27 @@ export interface AuthUser {
   orgName: string;
   entityType: EntityType;
   avatarInitials: string;
+  onboardingCompleted?: boolean;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signupWithPassword: (params: {
     name: string;
     email: string;
     password: string;
+    orgName: string;
+    entityType: EntityType;
+    state: string;
+    sector?: string;
+    turnoverInr?: number;
+    udyamTier?: UdyamTier;
+    complianceFlags?: Partial<ComplianceFlags>;
+  }) => Promise<{ success: boolean; error?: string }>;
+  completeOnboarding: (params: {
     orgName: string;
     entityType: EntityType;
     state: string;
@@ -42,27 +53,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { setCurrentOrgId, addOrganization } = useApp();
 
+  const extractUserFromSession = (sessionUser: any): AuthUser => {
+    const email = sessionUser.email || "";
+    const meta = sessionUser.user_metadata || {};
+    const displayName = meta.full_name || meta.name || email.split("@")[0] || "Officer";
+    const initials = displayName.slice(0, 2).toUpperCase();
+    const entityType = (meta.entityType as EntityType) || "Private Limited";
+    const isNgo = entityType === "Trust" || entityType === "Society";
+    const role = meta.role || (isNgo ? "ngo_trustee" : "msme_founder");
+    const orgId = meta.orgId || `org-${sessionUser.id.slice(0, 8)}`;
+    const orgName = meta.orgName || `${displayName}'s Enterprise`;
+
+    const onboardingCompleted = meta.onboardingCompleted === true;
+
+    return {
+      id: sessionUser.id,
+      email,
+      name: displayName,
+      role,
+      orgId,
+      orgName,
+      entityType,
+      avatarInitials: initials,
+      onboardingCompleted
+    };
+  };
+
   useEffect(() => {
     // 1. Check Supabase session if cloud connection is active
     const supabase = getBrowserSupabase();
     if (supabase && isSupabaseConfigured) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
-          const email = session.user.email || "";
-          const meta = session.user.user_metadata || {};
-          const initials = (meta.name || email).slice(0, 2).toUpperCase();
-
-          const authUser: AuthUser = {
-            id: session.user.id,
-            email,
-            name: meta.name || email.split("@")[0],
-            role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
-            orgId: meta.orgId || `org-${session.user.id.slice(0, 8)}`,
-            orgName: meta.orgName || "Enrolled Entity",
-            entityType: (meta.entityType as EntityType) || "Private Limited",
-            avatarInitials: initials
-          };
-
+          const authUser = extractUserFromSession(session.user);
           setUser(authUser);
           localStorage.setItem("gp_auth_user", JSON.stringify(authUser));
         } else {
@@ -75,21 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
-          const email = session.user.email || "";
-          const meta = session.user.user_metadata || {};
-          const initials = (meta.name || email).slice(0, 2).toUpperCase();
-
-          const authUser: AuthUser = {
-            id: session.user.id,
-            email,
-            name: meta.name || email.split("@")[0],
-            role: meta.role || (meta.entityType === "Trust" || meta.entityType === "Society" ? "ngo_trustee" : "msme_founder"),
-            orgId: meta.orgId || `org-${session.user.id.slice(0, 8)}`,
-            orgName: meta.orgName || "Enrolled Entity",
-            entityType: (meta.entityType as EntityType) || "Private Limited",
-            avatarInitials: initials
-          };
-
+          const authUser = extractUserFromSession(session.user);
           setUser(authUser);
           localStorage.setItem("gp_auth_user", JSON.stringify(authUser));
         } else {
@@ -252,7 +261,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             entityType: params.entityType,
             state: params.state,
             sector: params.sector || "CleanTech & EV",
-            role
+            role,
+            onboardingCompleted: true
           }
         }
       });
@@ -270,7 +280,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         orgId: newOrgId,
         orgName: params.orgName.trim(),
         entityType: params.entityType,
-        avatarInitials: initials
+        avatarInitials: initials,
+        onboardingCompleted: true
       };
 
       // Register new organization into application store
@@ -346,13 +357,122 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       orgId: newOrgId,
       orgName: params.orgName.trim(),
       entityType: params.entityType,
-      avatarInitials: initials
+      avatarInitials: initials,
+      onboardingCompleted: true
     };
 
     addOrganization(newOrganization);
     setUser(newUser);
     localStorage.setItem("gp_auth_user", JSON.stringify(newUser));
     setIsLoading(false);
+    return { success: true };
+  };
+
+  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    const supabase = getBrowserSupabase();
+    if (!supabase || !isSupabaseConfigured) {
+      return { success: false, error: "Supabase authentication client is not configured." };
+    }
+
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent"
+          }
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || "Failed to initialize Google OAuth." };
+    }
+  };
+
+  const completeOnboarding = async (params: {
+    orgName: string;
+    entityType: EntityType;
+    state: string;
+    sector?: string;
+    turnoverInr?: number;
+    udyamTier?: UdyamTier;
+    complianceFlags?: Partial<ComplianceFlags>;
+  }): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: "No active officer session found." };
+    }
+
+    const orgId = user.orgId || `org-${user.id.slice(0, 8)}`;
+    const isNgo = params.entityType === "Trust" || params.entityType === "Society" || params.entityType === "Section 8";
+    const role = isNgo ? "ngo_trustee" : "msme_founder";
+
+    const updatedUser: AuthUser = {
+      ...user,
+      orgId,
+      orgName: params.orgName.trim(),
+      entityType: params.entityType,
+      role,
+      onboardingCompleted: true
+    };
+
+    const newOrganization: Organization = {
+      id: orgId,
+      name: params.orgName.trim(),
+      entityType: params.entityType,
+      turnoverInr: params.turnoverInr !== undefined ? params.turnoverInr : (isNgo ? 8500000 : 48000000),
+      incorporationDate: new Date().toISOString().split("T")[0],
+      yearsOfOperation: 3,
+      udyamTier: params.udyamTier || (isNgo ? "None" : "Small"),
+      state: params.state,
+      sector: params.sector || "CleanTech & EV Mobility",
+      complianceFlags: {
+        hasPan: true,
+        hasGstin: !isNgo && !!params.complianceFlags?.hasGstin,
+        hasUdyam: !isNgo && !!params.complianceFlags?.hasUdyam,
+        has12A: isNgo && !!params.complianceFlags?.has12A,
+        has80G: isNgo && !!params.complianceFlags?.has80G,
+        hasNgoDarpan: isNgo && !!params.complianceFlags?.hasNgoDarpan,
+        hasCsr1: isNgo && !!params.complianceFlags?.hasCsr1,
+        hasFcra: false,
+        ...params.complianceFlags
+      },
+      missionDescription: `${params.orgName.trim()} operating in ${params.sector || "Innovation & Technology"} within ${params.state}.`,
+      contactEmail: user.email,
+      created_at: new Date().toISOString()
+    };
+
+    addOrganization(newOrganization);
+    setCurrentOrgId(orgId);
+    setUser(updatedUser);
+    localStorage.setItem("gp_auth_user", JSON.stringify(updatedUser));
+
+    const supabase = getBrowserSupabase();
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            onboardingCompleted: true,
+            orgId,
+            orgName: params.orgName.trim(),
+            entityType: params.entityType,
+            role,
+            state: params.state,
+            sector: params.sector
+          }
+        });
+      } catch (err) {
+        console.warn("Could not sync onboarding state to Supabase user metadata:", err);
+      }
+    }
+
     return { success: true };
   };
 
@@ -371,7 +491,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         loginWithPassword,
+        loginWithGoogle,
         signupWithPassword,
+        completeOnboarding,
         logout
       }}
     >

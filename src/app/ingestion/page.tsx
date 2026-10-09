@@ -100,6 +100,7 @@ export default function IngestionPage() {
   ]);
   const [harvestedSchemes, setHarvestedSchemes] = useState<Scheme[]>([]);
   const [activeTab, setActiveTab] = useState<"harvesters" | "importer" | "ledger">("harvesters");
+  const visibleSchemes = harvestedSchemes.length > 0 ? harvestedSchemes : schemes;
 
   // File Import state
   const [fileContent, setFileContent] = useState<string>("");
@@ -614,31 +615,41 @@ export default function IngestionPage() {
         </div>
       )}
 
-      {/* Harvested Schemes Immediate Preview */}
-      {harvestedSchemes.length > 0 && (
+      {/* Harvested & Catalog Schemes Active Preview */}
+      {visibleSchemes.length > 0 && (
         <div className="bg-[#E6DFD0] border border-[#22271F]/20 rounded p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#22271F]/15 pb-3">
-            <h3 className="font-serif font-bold text-base text-[#22271F] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#A13D2C]" />
-              Recently Ingested Schemes ({harvestedSchemes.length})
-            </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#22271F]/15 pb-3">
+            <div>
+              <h3 className="font-serif font-bold text-base text-[#22271F] flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#A13D2C]" />
+                <span>
+                  {harvestedSchemes.length > 0
+                    ? `Freshly Ingested Schemes (${harvestedSchemes.length})`
+                    : `Active Indexed Portal Schemes in Supabase Catalog (${visibleSchemes.length})`}
+                </span>
+              </h3>
+              <p className="text-[11px] font-mono text-[#22271F]/60 mt-0.5">
+                {harvestedSchemes.length > 0
+                  ? "Crawled, AST-normalized, and permanently committed to Supabase."
+                  : "All schemes below are permanently stored in database and ready for AST eligibility evaluations."}
+              </p>
+            </div>
             <Link 
               href="/schemes" 
-              className="text-xs font-mono text-[#A13D2C] hover:underline flex items-center gap-1 font-semibold"
+              className="text-xs font-mono text-[#A13D2C] hover:underline flex items-center gap-1 font-semibold whitespace-nowrap self-start sm:self-auto"
             >
-              <span>Explore in Grant Catalog</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Explore All in Grant Catalog &rarr;</span>
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {harvestedSchemes.slice(0, 6).map((s) => (
-              <div key={s.id} className="p-4 bg-[#EFEAE0] rounded border border-[#22271F]/15 space-y-2">
+            {visibleSchemes.slice(0, 9).map((s) => (
+              <div key={s.id} className="p-4 bg-[#EFEAE0] rounded border border-[#22271F]/15 space-y-2 hover:border-[#22271F]/40 transition-colors">
                 <div className="flex items-center justify-between text-[10px] font-mono text-[#22271F]/60">
-                  <span className="px-1.5 py-0.5 bg-[#2D4A3E]/10 text-[#2D4A3E] rounded font-semibold">
+                  <span className="px-1.5 py-0.5 bg-[#2D4A3E]/10 text-[#2D4A3E] rounded font-semibold uppercase">
                     {s.grantType}
                   </span>
-                  <span>{s.sourcePortal}</span>
+                  <span className="truncate max-w-[140px]">{s.sourcePortal}</span>
                 </div>
                 <h4 className="font-serif font-bold text-sm text-[#22271F] line-clamp-2">
                   {s.title}
@@ -650,7 +661,7 @@ export default function IngestionPage() {
                   {s.description}
                 </p>
                 <div className="pt-2 border-t border-[#22271F]/10 flex items-center justify-between text-[10px] font-mono text-[#22271F]/60">
-                  <span>Docs: {s.requiredDocuments.length} required</span>
+                  <span>Docs: {s.requiredDocuments?.length || 0} required</span>
                   <Link href={`/schemes/${s.id}`} className="text-[#22271F] hover:underline font-semibold">
                     View AST &rarr;
                   </Link>
@@ -658,6 +669,17 @@ export default function IngestionPage() {
               </div>
             ))}
           </div>
+
+          {visibleSchemes.length > 9 && (
+            <div className="pt-3 text-center border-t border-[#22271F]/10">
+              <Link
+                href="/schemes"
+                className="text-xs font-mono text-[#22271F] hover:text-[#A13D2C] underline font-semibold"
+              >
+                + View all {visibleSchemes.length} schemes in Grant Discovery Catalog
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </div>

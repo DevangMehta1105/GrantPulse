@@ -24,7 +24,8 @@ import {
   RefreshCw,
   Building2,
   Calendar,
-  Lock
+  Lock,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -83,13 +84,14 @@ const CERTIFICATE_PRESETS: Record<DocumentType, { fileName: string; sampleText: 
 };
 
 export default function DocumentsPage() {
-  const { documents, currentOrg, addDocument, schemes, getOrgDocumentReadiness } = useApp();
+  const { documents, currentOrg, addDocument, deleteDocument, schemes, getOrgDocumentReadiness } = useApp();
   const [selectedDocType, setSelectedDocType] = useState<DocumentType>("GSTIN_CERTIFICATE");
   const [fileNameInput, setFileNameInput] = useState(CERTIFICATE_PRESETS["GSTIN_CERTIFICATE"].fileName);
   const [ocrTextInput, setOcrTextInput] = useState(CERTIFICATE_PRESETS["GSTIN_CERTIFICATE"].sampleText);
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDocForInspect, setSelectedDocForInspect] = useState<UserDocument | null>(null);
   const [uploadSuccessAlert, setUploadSuccessAlert] = useState<string | null>(null);
+  const [uploadErrorAlert, setUploadErrorAlert] = useState<string | null>(null);
 
   const orgDocs = documents.filter(d => d.orgId === currentOrg.id);
 
@@ -135,6 +137,8 @@ export default function DocumentsPage() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsScanning(true);
+    setUploadSuccessAlert(null);
+    setUploadErrorAlert(null);
 
     try {
       const res = await fetch("/api/ocr/extract", {
@@ -151,11 +155,21 @@ export default function DocumentsPage() {
       const data = await res.json();
       const extraction = data.extraction;
 
-      addDocument(selectedDocType, fileNameInput, ocrTextInput);
-      setUploadSuccessAlert(`Scanned & Verified ${selectedDocType} for ${currentOrg.name}! ID: ${extraction?.extractedId || "VERIFIED"}`);
-      setTimeout(() => setUploadSuccessAlert(null), 4000);
+      const result = addDocument(selectedDocType, fileNameInput, ocrTextInput);
+      if (result.success) {
+        setUploadSuccessAlert(`✓ Verified & Vaulted: ${selectedDocType.replace(/_/g, ' ')} for ${currentOrg.name}! ID: ${result.document.ocrExtractedData?.extractedId || extraction?.extractedId || "VERIFIED"}`);
+        setTimeout(() => setUploadSuccessAlert(null), 5000);
+      } else {
+        setUploadErrorAlert(`Verification Failed: ${result.error || "Document does not match statutory pattern. File was rejected and not stored in vault."}`);
+      }
     } catch (err: any) {
-      addDocument(selectedDocType, fileNameInput, ocrTextInput);
+      const result = addDocument(selectedDocType, fileNameInput, ocrTextInput);
+      if (result.success) {
+        setUploadSuccessAlert(`✓ Verified: ${selectedDocType.replace(/_/g, ' ')}`);
+        setTimeout(() => setUploadSuccessAlert(null), 5000);
+      } else {
+        setUploadErrorAlert(`Verification Failed: ${result.error || "File could not be verified."}`);
+      }
     } finally {
       setIsScanning(false);
     }
@@ -168,7 +182,7 @@ export default function DocumentsPage() {
         <div>
           <div className="font-mono text-[11px] tracking-widest uppercase text-[var(--stamp)] mb-1 flex items-center gap-2 font-semibold">
             <span className="w-2 h-2 rounded-full bg-[var(--stamp)] animate-pulse"></span>
-            Pillar D · Document Audit & OCR Regex Pipeline
+            Pillar D · Document Audit &amp; OCR Regex Pipeline
           </div>
           <h1 className="text-3xl font-serif font-bold text-[var(--ink)] tracking-tight">
             Regulatory Document Vault
@@ -187,7 +201,7 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {/* Upload Notification Alert */}
+      {/* Upload Notification Alerts */}
       {uploadSuccessAlert && (
         <div className="p-4 bg-[var(--verified-bg)] border border-[var(--verified)] text-[var(--verified)] text-xs font-mono rounded flex items-center justify-between shadow-sm animate-fade-in">
           <div className="flex items-center gap-2 font-semibold">
@@ -195,6 +209,18 @@ export default function DocumentsPage() {
             <span>{uploadSuccessAlert}</span>
           </div>
           <button onClick={() => setUploadSuccessAlert(null)} className="text-[var(--verified)] hover:opacity-75">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {uploadErrorAlert && (
+        <div className="p-4 bg-red-100 border border-red-300 text-red-800 text-xs font-mono rounded flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2 font-semibold">
+            <XCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+            <span>{uploadErrorAlert}</span>
+          </div>
+          <button onClick={() => setUploadErrorAlert(null)} className="text-red-700 hover:opacity-75">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -366,14 +392,26 @@ export default function DocumentsPage() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDocForInspect(doc)}
-                      className="px-3 py-1.5 bg-[var(--paper-deep)] hover:bg-[var(--paper)] text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--ink)] font-mono text-xs rounded flex items-center gap-1.5 cursor-pointer transition-colors self-start sm:self-center"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-[var(--stamp)]" />
-                      <span>Inspect Dossier</span>
-                    </button>
+                    <div className="flex items-center gap-2 self-start sm:self-center">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDocForInspect(doc)}
+                        className="px-3 py-1.5 bg-[var(--paper-deep)] hover:bg-[var(--paper)] text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--ink)] font-mono text-xs rounded flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-[var(--stamp)]" />
+                        <span>Inspect Dossier</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteDocument(doc.id)}
+                        className="px-2.5 py-1.5 text-xs font-mono text-[var(--stamp)] hover:bg-[var(--stamp)]/10 border border-transparent hover:border-[var(--stamp)]/30 rounded flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Delete certificate from vault"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Delete</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -470,6 +508,32 @@ export default function DocumentsPage() {
         </div>
       </div>
 
+      {/* Lifecycle Flow Action Banner */}
+      <div className="p-5 bg-[#E6DFD0] border border-[#22271F]/20 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 font-mono">
+        <div className="space-y-1 text-center md:text-left">
+          <div className="text-[10px] tracking-widest uppercase text-[var(--stamp)] font-bold flex items-center justify-center md:justify-start gap-1.5">
+            <span>Next Stage of Grant Application</span>
+            <span>&rarr;</span>
+          </div>
+          <div className="font-serif font-bold text-base text-[var(--ink)]">
+            Ready to find matching government &amp; CSR grants?
+          </div>
+          <p className="text-xs text-[var(--ink-soft)]">
+            Your uploaded documents will be evaluated against AST boolean criteria and Zod eligibility rules.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/schemes"
+            className="px-5 py-2.5 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded-lg transition-all shadow-sm flex items-center gap-2"
+          >
+            <span>Advance to Step 2: Grant Discovery &amp; Match</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+
       {/* INSPECT DOSSIER MODAL */}
       {selectedDocForInspect && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
@@ -554,7 +618,19 @@ export default function DocumentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[var(--rule)] bg-[var(--paper-deep)] flex justify-end">
+            <div className="p-4 border-t border-[var(--rule)] bg-[var(--paper-deep)] flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  deleteDocument(selectedDocForInspect.id);
+                  setSelectedDocForInspect(null);
+                }}
+                className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 font-mono text-xs font-bold rounded flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                <span>Delete from Vault</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setSelectedDocForInspect(null)}

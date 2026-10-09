@@ -24,6 +24,7 @@ import {
   insertOrganizationToDb,
   insertSchemesToDb,
   insertUserDocumentToDb,
+  deleteUserDocumentFromDb,
   saveApplicationToDb,
   insertGrantExpenseToDb
 } from "../lib/supabase/service";
@@ -37,7 +38,8 @@ interface AppContextType {
   addScheme: (scheme: Scheme) => void;
   batchAddSchemes: (newSchemes: Scheme[]) => void;
   documents: UserDocument[];
-  addDocument: (docType: DocumentType, fileName: string, rawOcrText?: string) => void;
+  addDocument: (docType: DocumentType, fileName: string, rawOcrText?: string) => { success: boolean; document: UserDocument; error?: string };
+  deleteDocument: (docId: string) => void;
   applications: Application[];
   moveApplicationState: (
     appId: string, 
@@ -51,6 +53,7 @@ interface AppContextType {
   getOrgEvaluation: (schemeId: string) => EvaluationResult | null;
   getOrgDocumentReadiness: (schemeId: string) => ReturnType<typeof calculateDocumentReadiness>;
   isCloudConnected: boolean;
+  isHydrating: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -88,9 +91,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [expenses, setExpenses] = useState<GrantExpense[]>([]);
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(isSupabaseConfigured);
+  const [isHydrating, setIsHydrating] = useState<boolean>(true);
 
-  // Hydrate from Supabase on client mount
+  // Initialize immediately from localStorage cache on browser mount, then hydrate fresh from Supabase
   useEffect(() => {
+    try {
+      const cachedSchemes = localStorage.getItem("grantpulse_schemes");
+      if (cachedSchemes) {
+        const parsed = JSON.parse(cachedSchemes);
+        if (Array.isArray(parsed) && parsed.length > 0) setSchemes(parsed);
+      }
+      const cachedOrgs = localStorage.getItem("grantpulse_orgs");
+      if (cachedOrgs) {
+        const parsed = JSON.parse(cachedOrgs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setOrganizations(parsed);
+          const savedCurrentOrgId = localStorage.getItem("grantpulse_current_org_id");
+          if (savedCurrentOrgId && parsed.some((o: Organization) => o.id === savedCurrentOrgId)) {
+            setCurrentOrgId(savedCurrentOrgId);
+          } else {
+            setCurrentOrgId(parsed[0].id);
+          }
+        }
+      }
+      const cachedDocs = localStorage.getItem("grantpulse_docs");
+      if (cachedDocs) {
+        const parsed = JSON.parse(cachedDocs);
+        if (Array.isArray(parsed) && parsed.length > 0) setDocuments(parsed);
+      }
+      const cachedApps = localStorage.getItem("grantpulse_apps");
+      if (cachedApps) {
+        const parsed = JSON.parse(cachedApps);
+        if (Array.isArray(parsed) && parsed.length > 0) setApplications(parsed);
+      }
+      const cachedExps = localStorage.getItem("grantpulse_exps");
+      if (cachedExps) {
+        const parsed = JSON.parse(cachedExps);
+        if (Array.isArray(parsed) && parsed.length > 0) setExpenses(parsed);
+      }
+    } catch (e) {
+      console.warn("Could not read from local cache:", e);
+    }
+
     async function hydrateFromSupabase() {
       try {
         const [orgs, dbSchemes, docs, apps, exps] = await Promise.all([
@@ -101,19 +143,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           fetchGrantExpensesFromDb()
         ]);
 
-        setOrganizations(orgs);
         if (orgs.length > 0) {
-          setCurrentOrgId(prev => prev || orgs[0].id);
+          setOrganizations(orgs);
+          try {
+            localStorage.setItem("grantpulse_orgs", JSON.stringify(orgs));
+          } catch {}
+          setCurrentOrgId(prev => {
+            const chosen = prev || orgs[0].id;
+            try { localStorage.setItem("grantpulse_current_org_id", chosen); } catch {}
+            return chosen;
+          });
         }
-        setSchemes(dbSchemes);
-        setDocuments(docs);
-        setApplications(apps);
-        setExpenses(exps);
+
+        if (dbSchemes.length > 0) {
+          setSchemes(dbSchemes);
+          try {
+            localStorage.setItem("grantpulse_schemes", JSON.stringify(dbSchemes));
+          } catch {}
+        }
+
+        if (docs.length > 0) {
+          setDocuments(docs);
+          try {
+            localStorage.setItem("grantpulse_docs", JSON.stringify(docs));
+          } catch {}
+        }
+
+        if (apps.length > 0) {
+          setApplications(apps);
+          try {
+            localStorage.setItem("grantpulse_apps", JSON.stringify(apps));
+          } catch {}
+        }
+
+        if (exps.length > 0) {
+          setExpenses(exps);
+          try {
+            localStorage.setItem("grantpulse_exps", JSON.stringify(exps));
+          } catch {}
+        }
+
         if (isSupabaseConfigured) {
           setIsCloudConnected(true);
         }
       } catch (e) {
         console.warn("Could not hydrate from Supabase:", e);
+      } finally {
+        setIsHydrating(false);
       }
     }
 
@@ -122,33 +198,54 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const currentOrg = organizations.find(o => o.id === currentOrgId) || organizations[0] || EMPTY_ORGANIZATION;
 
+  const handleSetCurrentOrgId = (id: string) => {
+    setCurrentOrgId(id);
+    try {
+      localStorage.setItem("grantpulse_current_org_id", id);
+    } catch {}
+  };
+
   const addOrganization = (org: Organization) => {
-    setOrganizations(prev => [org, ...prev]);
-    setCurrentOrgId(org.id);
+    setOrganizations(prev => {
+      const updated = [org, ...prev];
+      try { localStorage.setItem("grantpulse_orgs", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+    handleSetCurrentOrgId(org.id);
     if (isSupabaseConfigured) {
       insertOrganizationToDb(org);
     }
   };
 
   const addScheme = (newScheme: Scheme) => {
-    setSchemes(prev => [newScheme, ...prev]);
+    setSchemes(prev => {
+      const updated = [newScheme, ...prev];
+      try { localStorage.setItem("grantpulse_schemes", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     if (isSupabaseConfigured) {
       insertSchemesToDb([newScheme]);
     }
   };
 
-  const batchAddSchemes = (newSchemes: Scheme[]) => {
+  const batchAddSchemes = async (newSchemes: Scheme[]) => {
     setSchemes(prev => {
       const existingIds = new Set(prev.map(s => s.id));
       const filteredNew = newSchemes.filter(s => !existingIds.has(s.id));
-      return [...filteredNew, ...prev];
+      const updated = [...filteredNew, ...prev];
+      try { localStorage.setItem("grantpulse_schemes", JSON.stringify(updated)); } catch {}
+      return updated;
     });
     if (isSupabaseConfigured) {
-      insertSchemesToDb(newSchemes);
+      await insertSchemesToDb(newSchemes);
     }
   };
 
-  const addDocument = (docType: DocumentType, fileName: string, rawOcrText: string = "") => {
+  const addDocument = (
+    docType: DocumentType, 
+    fileName: string, 
+    rawOcrText: string = ""
+  ): { success: boolean; document: UserDocument; error?: string } => {
     const ocrResult = validateDocumentOcr(docType, rawOcrText);
     const newDoc: UserDocument = {
       id: `doc-${Date.now()}`,
@@ -168,9 +265,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       verifiedAt: ocrResult.isValid ? new Date().toISOString() : undefined
     };
 
-    setDocuments(prev => [newDoc, ...prev]);
+    // Only vault statutory certificates that pass verification
+    if (ocrResult.isValid) {
+      setDocuments(prev => {
+        const updated = [newDoc, ...prev];
+        try { localStorage.setItem("grantpulse_docs", JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      if (isSupabaseConfigured) {
+        insertUserDocumentToDb(newDoc);
+      }
+      return { success: true, document: newDoc };
+    } else {
+      return { 
+        success: false, 
+        document: newDoc, 
+        error: ocrResult.errors?.join("; ") || `Certificate validation failed for ${docType.replace(/_/g, ' ')}. Expected regulatory pattern was not found in the uploaded file.`
+      };
+    }
+  };
+
+  const deleteDocument = (docId: string) => {
+    setDocuments(prev => {
+      const updated = prev.filter(d => d.id !== docId);
+      try { localStorage.setItem("grantpulse_docs", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     if (isSupabaseConfigured) {
-      insertUserDocumentToDb(newDoc);
+      deleteUserDocumentFromDb(docId);
     }
   };
 
@@ -225,19 +347,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     let updatedAppObj: Application | null = null;
 
-    setApplications(prev => prev.map(a => {
-      if (a.id === appId) {
-        updatedAppObj = {
-          ...a,
-          currentState: targetState,
-          externalApplicationId: externalAppId || a.externalApplicationId,
-          updated_at: new Date().toISOString(),
-          stateHistory: [...a.stateHistory, newLog]
-        };
-        return updatedAppObj;
-      }
-      return a;
-    }));
+    setApplications(prev => {
+      const updated = prev.map(a => {
+        if (a.id === appId) {
+          updatedAppObj = {
+            ...a,
+            currentState: targetState,
+            externalApplicationId: externalAppId || a.externalApplicationId,
+            updated_at: new Date().toISOString(),
+            stateHistory: [...a.stateHistory, newLog]
+          };
+          return updatedAppObj;
+        }
+        return a;
+      });
+      try { localStorage.setItem("grantpulse_apps", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
 
     if (isSupabaseConfigured && updatedAppObj) {
       saveApplicationToDb(updatedAppObj);
@@ -271,7 +397,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       stateHistory: [genesisLog]
     };
 
-    setApplications(prev => [newApp, ...prev]);
+    setApplications(prev => {
+      const updated = [newApp, ...prev];
+      try { localStorage.setItem("grantpulse_apps", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     if (isSupabaseConfigured) {
       saveApplicationToDb(newApp);
     }
@@ -285,7 +415,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: `exp-${Date.now()}`,
       timestamp: new Date().toISOString()
     };
-    setExpenses(prev => [newExp, ...prev]);
+    setExpenses(prev => {
+      const updated = [newExp, ...prev];
+      try { localStorage.setItem("grantpulse_exps", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     if (isSupabaseConfigured) {
       insertGrantExpenseToDb(newExp);
     }
@@ -296,13 +430,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         organizations,
         currentOrg,
-        setCurrentOrgId,
+        setCurrentOrgId: handleSetCurrentOrgId,
         addOrganization,
         schemes,
         addScheme,
         batchAddSchemes,
         documents,
         addDocument,
+        deleteDocument,
         applications,
         moveApplicationState,
         createNewApplication,
@@ -310,7 +445,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addExpense,
         getOrgEvaluation,
         getOrgDocumentReadiness,
-        isCloudConnected
+        isCloudConnected,
+        isHydrating
       }}
     >
       {children}

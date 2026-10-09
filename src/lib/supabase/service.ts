@@ -125,34 +125,38 @@ export async function fetchSchemesFromDb(): Promise<Scheme[]> {
 
 export async function insertSchemesToDb(schemes: Scheme[]): Promise<boolean> {
   const supabase = getBrowserSupabase();
-  if (!supabase) return false;
+  if (!supabase || schemes.length === 0) return false;
 
   try {
     const rows = schemes.map(s => ({
       id: s.id,
-      source_type: s.sourceType,
-      source_portal: s.sourcePortal,
+      source_type: s.sourceType === "manual" ? "manual" : "scraped",
+      source_portal: s.sourcePortal || "GrantPulse Catalog",
       title: s.title,
       ministry_or_funder: s.ministryOrFunder,
       description: s.description,
       grant_type: s.grantType,
-      max_funding_amount: s.maxFundingAmount,
-      min_funding_amount: s.minFundingAmount,
-      subsidy_percentage: s.subsidyPercentage,
-      deadline: s.deadline,
-      sector: s.sector,
-      official_portal_url: s.officialPortalUrl,
+      max_funding_amount: Number(s.maxFundingAmount) || 0,
+      min_funding_amount: s.minFundingAmount ? Number(s.minFundingAmount) : null,
+      subsidy_percentage: s.subsidyPercentage ? Number(s.subsidyPercentage) : null,
+      deadline: s.deadline || "Rolling (Open All Year)",
+      sector: s.sector || [],
+      official_portal_url: s.officialPortalUrl || "https://grantpulse.gov.in",
       eligibility_ast: s.eligibilityAst,
-      required_documents: s.requiredDocuments,
-      tags: s.tags,
-      created_at: s.created_at
+      required_documents: s.requiredDocuments || [],
+      tags: s.tags || [],
+      created_at: s.created_at || new Date().toISOString()
     }));
 
     const { error } = await supabase
       .from("schemes")
       .upsert(rows, { onConflict: "id" });
 
-    return !error;
+    if (error) {
+      console.error("Supabase insertSchemes error:", error);
+      return false;
+    }
+    return true;
   } catch (e) {
     console.error("Supabase insertSchemes error:", e);
     return false;
@@ -220,6 +224,27 @@ export async function insertUserDocumentToDb(doc: UserDocument): Promise<boolean
     return !error;
   } catch (e) {
     console.error("Supabase insertUserDocument error:", e);
+    return false;
+  }
+}
+
+export async function deleteUserDocumentFromDb(docId: string): Promise<boolean> {
+  const supabase = getBrowserSupabase();
+  if (!supabase) return false;
+
+  try {
+    const { error } = await supabase
+      .from("user_documents")
+      .delete()
+      .eq("id", docId);
+
+    if (error) {
+      console.error("Supabase deleteUserDocument error:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Supabase deleteUserDocument exception:", e);
     return false;
   }
 }

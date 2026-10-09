@@ -63,8 +63,8 @@ export function Header() {
     setIsDrawerOpen(false);
   }, [pathname]);
 
-  // Auth pages are 100% isolated: NEVER render navbar on login/signup
-  if (pathname === "/login" || pathname === "/signup") {
+  // Auth & Onboarding pages are 100% isolated: NEVER render navbar on login/signup/auth/onboarding
+  if (pathname === "/login" || pathname === "/signup" || pathname.startsWith("/auth/") || pathname === "/onboarding") {
     return null;
   }
 
@@ -227,6 +227,17 @@ export function Header() {
           {/* ---- RIGHT ACTIONS ---- */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             
+            {/* Incomplete Profile Indicator Banner */}
+            {user && !user.onboardingCompleted && (
+              <Link
+                href="/onboarding"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#FFF4DC] border border-[#E0A838] rounded-full text-[11px] font-mono text-[#734A00] font-semibold hover:bg-[#FFECC2] transition-colors shadow-2xs no-underline"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                <span>Complete Questionnaire</span>
+              </Link>
+            )}
+
             {/* Subtle Divider */}
             <div className="hidden sm:block h-4 w-[1px] bg-[rgba(42,38,33,0.18)] mx-1" />
 
@@ -332,6 +343,16 @@ export function Header() {
                         {user.role.replace(/_/g, " ")}
                       </div>
                     </div>
+                    {user && !user.onboardingCompleted && (
+                      <Link
+                        href="/onboarding"
+                        onClick={() => setIsUserOpen(false)}
+                        className="flex items-center gap-2 px-2.5 py-2 text-[12px] text-amber-900 bg-[#FFF7E6] border border-[#E0A838] font-bold rounded-lg no-underline transition-colors mb-2"
+                      >
+                        <span className="text-sm">⚠️</span>
+                        <span>Complete Questionnaire</span>
+                      </Link>
+                    )}
                     <div className="space-y-1">
                       <Link
                         href="/documents"
@@ -403,6 +424,22 @@ export function Header() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* Incomplete profile alert in mobile drawer */}
+              {user && !user.onboardingCompleted && (
+                <div className="mb-2 p-3 bg-[#FFF7E6] border border-[#E0A838] rounded-lg">
+                  <div className="text-[11px] font-bold text-[#734A00] flex items-center gap-1.5 mb-1.5">
+                    <span>⚠️ Profile Incomplete</span>
+                  </div>
+                  <Link
+                    href="/onboarding"
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="block text-center py-1.5 px-2 bg-[#22271F] text-[#FAF7F0] rounded text-xs font-mono font-bold no-underline"
+                  >
+                    Fill Questionnaire →
+                  </Link>
+                </div>
+              )}
 
               {/* Full Section Directory */}
               <div className="space-y-1 font-sans text-xs">

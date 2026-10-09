@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { formatINR, formatDate } from "@/lib/utils";
@@ -576,6 +577,32 @@ ${dossier.sroiMetrics.map(e => `[${e.metric}] Baseline: ${e.baseline} -> Target 
             </div>
           </div>
         )}
+      </div>
+
+      {/* Lifecycle Flow Action Banner */}
+      <div className="p-5 bg-[#E6DFD0] border border-[#22271F]/20 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 font-mono">
+        <div className="space-y-1 text-center md:text-left">
+          <div className="text-[10px] tracking-widest uppercase text-[var(--stamp)] font-bold flex items-center justify-center md:justify-start gap-1.5">
+            <span>Next Stage of Grant Application</span>
+            <span>&rarr;</span>
+          </div>
+          <div className="font-serif font-bold text-base text-[var(--ink)]">
+            Ready to track disbursement and GFR 12-A utilization?
+          </div>
+          <p className="text-xs text-[var(--ink-soft)]">
+            Ensure post-sanction fiscal compliance with itemized vouchers, budget heads, and GFR Form 12-A audit certificates.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/compliance"
+            className="px-5 py-2.5 bg-[var(--ink)] hover:bg-[#2D4A3E] text-[var(--paper)] text-xs font-mono font-bold rounded-lg transition-all shadow-sm flex items-center gap-2"
+          >
+            <span>Advance to Step 5: GFR 12-A Ledger</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
       {/* PDF DOSSIER PRINT PREVIEW MODAL */}
