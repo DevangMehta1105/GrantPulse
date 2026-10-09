@@ -96,9 +96,17 @@ export async function fetchSchemesFromDb(): Promise<Scheme[]> {
       return [];
     }
 
-    return data
-      .filter((row: any) => !SEED_SCHEME_IDS.has(row.id))
-      .map((row: any) => ({
+    const seenTitles = new Set<string>();
+    const uniqueSchemes: Scheme[] = [];
+
+    for (const row of data) {
+      if (SEED_SCHEME_IDS.has(row.id)) continue;
+      const normalizedTitle = (row.title || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!normalizedTitle || seenTitles.has(normalizedTitle)) {
+        continue;
+      }
+      seenTitles.add(normalizedTitle);
+      uniqueSchemes.push({
         id: row.id,
         sourceType: row.source_type,
         sourcePortal: row.source_portal,
@@ -116,7 +124,10 @@ export async function fetchSchemesFromDb(): Promise<Scheme[]> {
         requiredDocuments: row.required_documents || [],
         tags: row.tags || [],
         created_at: row.created_at
-      }));
+      });
+    }
+
+    return uniqueSchemes;
   } catch (e) {
     console.warn("Supabase fetchSchemes fallback:", e);
     return [];
@@ -128,7 +139,15 @@ export async function insertSchemesToDb(schemes: Scheme[]): Promise<boolean> {
   if (!supabase || schemes.length === 0) return false;
 
   try {
-    const rows = schemes.map(s => ({
+    // Deduplicate batch by title before DB upsert
+    const dedupedBatch = new Map<string, Scheme>();
+    for (const s of schemes) {
+      const key = (s.title || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (key) dedupedBatch.set(key, s);
+    }
+    const uniqueSchemes = Array.from(dedupedBatch.values());
+
+    const rows = uniqueSchemes.map(s => ({
       id: s.id,
       source_type: s.sourceType === "manual" ? "manual" : "scraped",
       source_portal: s.sourcePortal || "GrantPulse Catalog",

@@ -15,8 +15,22 @@ export default function SchemesPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ELIGIBLE" | "ACTION_NEEDED" | "IN_PIPELINE">("ALL");
   const [sortBy, setSortBy] = useState<"AST" | "SEMANTIC" | "AMOUNT">("SEMANTIC");
 
-  // Pre-calculate semantic and AST scores for all schemes
-  const enrichedSchemes = schemes.map(scheme => {
+  // Deduplicate schemes strictly by title to ensure no duplicate grant card is ever rendered
+  const uniqueSchemes = React.useMemo(() => {
+    const map = new Map<string, (typeof schemes)[0]>();
+    for (const s of schemes) {
+      if (!s || !s.title) continue;
+      const key = s.title.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+      if (!key) continue;
+      if (!map.has(key)) {
+        map.set(key, s);
+      }
+    }
+    return Array.from(map.values());
+  }, [schemes]);
+
+  // Pre-calculate semantic and AST scores for all unique schemes
+  const enrichedSchemes = uniqueSchemes.map(scheme => {
     const astResult = getOrgEvaluation(scheme.id);
     const semanticResult = evaluateSemanticFit(currentOrg, scheme);
     const existingApp = applications.find(a => a.orgId === currentOrg.id && a.schemeId === scheme.id);

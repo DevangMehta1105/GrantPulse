@@ -5,6 +5,7 @@ import { harvestStartupIndiaPortal } from "@/lib/ingestion/scrapers/startupindia
 import { Scheme } from "@/lib/types";
 import { IngestionLogEntry } from "@/lib/ingestion/types";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getSchemeDedupeKey } from "@/lib/ingestion/normalizer";
 
 export async function POST(req: Request) {
   try {
@@ -35,6 +36,16 @@ export async function POST(req: Request) {
       logs = [...logs, ...startupRes.logs];
       errors = [...errors, ...startupRes.errors];
     }
+
+    // Deduplicate in-memory to prevent multiple identical schemes
+    const dedupedMap = new Map<string, Scheme>();
+    for (const s of schemes) {
+      const key = getSchemeDedupeKey(s);
+      if (key) {
+        dedupedMap.set(key, s);
+      }
+    }
+    schemes = Array.from(dedupedMap.values());
 
     // Persist schemes directly to Supabase server-side
     let dbPersistedCount = 0;

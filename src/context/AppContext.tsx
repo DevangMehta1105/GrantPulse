@@ -93,13 +93,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(isSupabaseConfigured);
   const [isHydrating, setIsHydrating] = useState<boolean>(true);
 
+function deduplicateSchemes(schemes: Scheme[]): Scheme[] {
+  const map = new Map<string, Scheme>();
+  for (const s of schemes) {
+    if (!s || !s.title) continue;
+    const key = s.title.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+    if (!key) continue;
+    if (!map.has(key)) {
+      map.set(key, s);
+    }
+  }
+  return Array.from(map.values());
+}
+
   // Initialize immediately from localStorage cache on browser mount, then hydrate fresh from Supabase
   useEffect(() => {
     try {
       const cachedSchemes = localStorage.getItem("grantpulse_schemes");
       if (cachedSchemes) {
         const parsed = JSON.parse(cachedSchemes);
-        if (Array.isArray(parsed) && parsed.length > 0) setSchemes(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const clean = deduplicateSchemes(parsed);
+          setSchemes(clean);
+          try { localStorage.setItem("grantpulse_schemes", JSON.stringify(clean)); } catch {}
+        }
       }
       const cachedOrgs = localStorage.getItem("grantpulse_orgs");
       if (cachedOrgs) {
@@ -156,9 +173,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (dbSchemes.length > 0) {
-          setSchemes(dbSchemes);
+          const clean = deduplicateSchemes(dbSchemes);
+          setSchemes(clean);
           try {
-            localStorage.setItem("grantpulse_schemes", JSON.stringify(dbSchemes));
+            localStorage.setItem("grantpulse_schemes", JSON.stringify(clean));
           } catch {}
         }
 
@@ -219,7 +237,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addScheme = (newScheme: Scheme) => {
     setSchemes(prev => {
-      const updated = [newScheme, ...prev];
+      const key = (newScheme.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+      const filtered = prev.filter(s => (s.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim() !== key);
+      const updated = [newScheme, ...filtered];
       try { localStorage.setItem("grantpulse_schemes", JSON.stringify(updated)); } catch {}
       return updated;
     });
@@ -230,9 +250,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const batchAddSchemes = async (newSchemes: Scheme[]) => {
     setSchemes(prev => {
-      const existingIds = new Set(prev.map(s => s.id));
-      const filteredNew = newSchemes.filter(s => !existingIds.has(s.id));
-      const updated = [...filteredNew, ...prev];
+      const map = new Map<string, Scheme>();
+      // Index existing schemes by normalized title
+      for (const s of prev) {
+        const key = (s.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+        if (key) map.set(key, s);
+      }
+      // Upsert new schemes by normalized title (overwriting existing entry instead of duplicating)
+      for (const s of newSchemes) {
+        const key = (s.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+        if (key) map.set(key, s);
+      }
+      const updated = Array.from(map.values());
       try { localStorage.setItem("grantpulse_schemes", JSON.stringify(updated)); } catch {}
       return updated;
     });

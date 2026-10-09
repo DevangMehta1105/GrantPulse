@@ -100,7 +100,17 @@ export default function IngestionPage() {
   ]);
   const [harvestedSchemes, setHarvestedSchemes] = useState<Scheme[]>([]);
   const [activeTab, setActiveTab] = useState<"harvesters" | "importer" | "ledger">("harvesters");
-  const visibleSchemes = harvestedSchemes.length > 0 ? harvestedSchemes : schemes;
+  const visibleSchemes = React.useMemo(() => {
+    const list = harvestedSchemes.length > 0 ? harvestedSchemes : schemes;
+    const map = new Map<string, Scheme>();
+    for (const s of list) {
+      if (!s || !s.title) continue;
+      const key = s.title.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, s);
+    }
+    return Array.from(map.values());
+  }, [harvestedSchemes, schemes]);
 
   // File Import state
   const [fileContent, setFileContent] = useState<string>("");
@@ -143,9 +153,15 @@ export default function IngestionPage() {
         if (Array.isArray(data.logs)) {
           setLogs(prev => [...prev, ...data.logs]);
         }
-        setHarvestedSchemes(data.schemes);
-        batchAddSchemes(data.schemes);
-        addLog("SUCCESS", `[PIPELINE COMPLETE] Harvested & Zod-validated ${data.schemes.length} schemes. Injected into live GrantPulse catalog.`);
+        const dedupedIncoming = new Map<string, Scheme>();
+        for (const s of data.schemes) {
+          const key = s.title.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+          if (key) dedupedIncoming.set(key, s);
+        }
+        const cleanSchemes = Array.from(dedupedIncoming.values());
+        setHarvestedSchemes(cleanSchemes);
+        batchAddSchemes(cleanSchemes);
+        addLog("SUCCESS", `[PIPELINE COMPLETE] Harvested & Zod-validated ${cleanSchemes.length} schemes. Injected into live GrantPulse catalog.`);
       } else {
         addLog("ERROR", `Scraper error: ${data.error || "Unknown response failure"}`);
       }
@@ -185,7 +201,14 @@ export default function IngestionPage() {
 
       if (data.validSchemes && data.validSchemes.length > 0) {
         batchAddSchemes(data.validSchemes);
-        setHarvestedSchemes(prev => [...data.validSchemes, ...prev]);
+        setHarvestedSchemes(prev => {
+          const map = new Map<string, Scheme>();
+          for (const s of [...data.validSchemes, ...prev]) {
+            const key = s.title.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+            if (key) map.set(key, s);
+          }
+          return Array.from(map.values());
+        });
         addLog("SUCCESS", `[ZOD VALIDATION PASSED] ${data.validSchemes.length} schemes successfully normalized and committed.`);
       }
 

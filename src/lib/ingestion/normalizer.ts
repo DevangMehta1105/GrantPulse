@@ -271,6 +271,33 @@ export function inferRequiredDocuments(
 }
 
 /**
+ * Canonical deduplication key for schemes to guarantee no duplicate grant is ever shown
+ */
+export function getSchemeDedupeKey(scheme: { title?: string; id?: string }): string {
+  if (!scheme.title) return scheme.id || "";
+  return scheme.title.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+}
+
+/**
+ * Generates a consistent, deterministic scheme ID so re-scraping the same scheme
+ * always produces the exact same ID for database upserting and in-memory deduplication.
+ */
+export function generateDeterministicSchemeId(sourcePortal: string, title: string, rawId?: string): string {
+  if (rawId && rawId.trim()) {
+    const cleanRaw = rawId.trim().toLowerCase().replace(/[^a-z0-9-_]/g, "");
+    return cleanRaw.startsWith("scheme-") ? cleanRaw : `scheme-${cleanRaw}`;
+  }
+  const portalPrefix = sourcePortal.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const cleanTitleSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+  return `scheme-${portalPrefix}-${cleanTitleSlug}`;
+}
+
+/**
  * Normalizes a raw crawled item into a fully typed and Zod-validated Scheme object
  */
 export function normalizeScrapedItem(
@@ -287,13 +314,8 @@ export function normalizeScrapedItem(
     
     const requiredDocs = inferRequiredDocuments(raw.documentsRequiredRaw, raw.eligibilityText || raw.description);
     
-    // Generate a unique, deterministic ID
-    const cleanTitleSlug = raw.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 30);
-    const id = `scheme-${sourcePortal.split(".")[0]}-${cleanTitleSlug}-${Date.now().toString().slice(-4)}`;
+    // Generate a 100% deterministic ID (no timestamps)
+    const id = generateDeterministicSchemeId(sourcePortal, raw.title, raw.rawId);
 
     const portalHostname = raw.officialLink?.includes("http") ? new URL(raw.officialLink).hostname : sourcePortal;
     const sectorArray = [raw.sectorTag || "General MSME & Technology"];
